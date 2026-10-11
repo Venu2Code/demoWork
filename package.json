@@ -1,0 +1,13 @@
+{
+  "name": "calculator-app",
+  "version": "1.0.0",
+  "description": "Full-stack calculator: REST API, safe expression parser and web UI (zero dependencies)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js",
+    "coverage": "node --test --experimental-test-coverage test/*.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}

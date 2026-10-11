@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculator</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="calc" aria-label="Calculator">
+    <div class="display">
+      <div id="expression" class="expression" aria-live="off"></div>
+      <div id="result" class="result" role="status" aria-live="polite">0</div>
+    </div>
+    <div class="keys" id="keys">
+      <button data-action="clear" class="fn">C</button>
+      <button data-action="back" class="fn" aria-label="Backspace">⌫</button>
+      <button data-key="(" class="fn">(</button>
+      <button data-key=")" class="fn">)</button>
+
+      <button data-key="sqrt(" class="fn">√</button>
+      <button data-key="^" class="fn">xʸ</button>
+      <button data-key="%" class="fn">mod</button>
+      <button data-key="/" class="op">÷</button>
+
+      <button data-key="7">7</button>
+      <button data-key="8">8</button>
+      <button data-key="9">9</button>
+      <button data-key="*" class="op">×</button>
+
+      <button data-key="4">4</button>
+      <button data-key="5">5</button>
+      <button data-key="6">6</button>
+      <button data-key="-" class="op">−</button>
+
+      <button data-key="1">1</button>
+      <button data-key="2">2</button>
+      <button data-key="3">3</button>
+      <button data-key="+" class="op">+</button>
+
+      <button data-key="0" class="wide">0</button>
+      <button data-key=".">.</button>
+      <button data-action="equals" class="eq">=</button>
+    </div>
+    <section class="history">
+      <h2>History <button id="clear-history" class="link">Clear</button></h2>
+      <ul id="history"></ul>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
