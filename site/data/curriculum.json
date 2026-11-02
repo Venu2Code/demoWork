@@ -1,0 +1,1097 @@
+{
+ "version": 1,
+ "levels": {
+  "1": "Foundations",
+  "2": "Intermediate",
+  "3": "Advanced"
+ },
+ "tracks": [
+  {
+   "id": "hardware",
+   "name": "Hardware & Systems",
+   "icon": "cpu",
+   "tagline": "The machine under your code: just enough to survive and thrive in IT.",
+   "color": "amber"
+  },
+  {
+   "id": "programming",
+   "name": "Programming",
+   "icon": "code",
+   "tagline": "From first loop to production-grade software engineering.",
+   "color": "violet"
+  },
+  {
+   "id": "networking",
+   "name": "Networking",
+   "icon": "network",
+   "tagline": "How packets, DNS and TLS really move your apps around the world.",
+   "color": "cyan"
+  },
+  {
+   "id": "ai",
+   "name": "AI & Machine Learning",
+   "icon": "brain",
+   "tagline": "From ML basics to building reliable LLM-powered products.",
+   "color": "rose"
+  },
+  {
+   "id": "cloud",
+   "name": "Cloud & DevOps",
+   "icon": "cloud",
+   "tagline": "Ship, scale and secure software on modern infrastructure.",
+   "color": "emerald"
+  }
+ ],
+ "lessons": [
+  {
+   "id": "hardware-01",
+   "order": 1,
+   "track": "hardware",
+   "level": 1,
+   "minutes": 20,
+   "title": "Inside a computer: CPU, RAM, storage",
+   "summary": "Know what each component does and which one is the bottleneck for a given problem.",
+   "points": [
+    "The CPU executes instructions; more cores help parallel work, higher clocks help single-thread speed.",
+    "RAM is fast, volatile working memory; running out causes swapping, which is dramatically slower.",
+    "SSDs (NVMe) are orders of magnitude faster than HDDs for random access; HDDs are cheap bulk storage.",
+    "The motherboard, PSU and cooling decide what you can actually run reliably."
+   ],
+   "quiz": {
+    "q": "Your laptop slows to a crawl when you open many tabs and the disk light stays on. Most likely cause?",
+    "options": [
+     "CPU too hot",
+     "RAM exhausted and swapping to disk",
+     "Wi-Fi is down",
+     "GPU driver is old"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "CS50: Introduction to Computer Science",
+     "url": "https://cs50.harvard.edu/x/"
+    },
+    {
+     "title": "Teach Yourself CS",
+     "url": "https://teachyourselfcs.com/"
+    }
+   ]
+  },
+  {
+   "id": "hardware-02",
+   "order": 2,
+   "track": "hardware",
+   "level": 1,
+   "minutes": 25,
+   "title": "Operating systems & the command line",
+   "summary": "Processes, files, permissions and the shell are the daily tools of every engineer.",
+   "points": [
+    "A process is a running program; the OS schedules processes onto CPU cores.",
+    "Everything is a file on Linux: devices, sockets, processes (/proc).",
+    "chmod/chown and users/groups control who can read, write or execute.",
+    "Pipes (|) compose small tools: grep, sort, uniq, awk, jq."
+   ],
+   "quiz": {
+    "q": "Which command shows the processes consuming the most CPU interactively?",
+    "options": [
+     "ls",
+     "top / htop",
+     "cat",
+     "chmod"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Linux kernel documentation",
+     "url": "https://www.kernel.org/doc/html/latest/"
+    },
+    {
+     "title": "The Missing Semester style roadmap",
+     "url": "https://roadmap.sh/linux"
+    }
+   ]
+  },
+  {
+   "id": "hardware-03",
+   "order": 3,
+   "track": "hardware",
+   "level": 2,
+   "minutes": 25,
+   "title": "How data is represented: bits, bytes, encodings",
+   "summary": "Binary, hex, endianness, Unicode and floating point explain countless real-world bugs.",
+   "points": [
+    "Everything is bits; hex is a compact way to read bytes.",
+    "Floating point is approximate: 0.1 + 0.2 != 0.3 in binary.",
+    "UTF-8 is variable-width and ASCII-compatible; a character is not always a byte.",
+    "Endianness decides byte order in memory and on the wire (network order is big-endian)."
+   ],
+   "quiz": {
+    "q": "Why does 0.1 + 0.2 !== 0.3 in most languages?",
+    "options": [
+     "A language bug",
+     "Binary floating point cannot represent 0.1 exactly",
+     "Integers overflow",
+     "Compilers round down"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Nand2Tetris: build a computer from NAND gates",
+     "url": "https://www.nand2tetris.org/"
+    },
+    {
+     "title": "Python: floating point arithmetic",
+     "url": "https://docs.python.org/3/tutorial/floatingpoint.html"
+    }
+   ]
+  },
+  {
+   "id": "hardware-04",
+   "order": 4,
+   "track": "hardware",
+   "level": 2,
+   "minutes": 30,
+   "title": "Memory hierarchy, caches & performance",
+   "summary": "Why locality of reference often matters more than clever algorithms.",
+   "points": [
+    "Registers > L1/L2/L3 cache > RAM > SSD > network; each step is ~10-100x slower.",
+    "Sequential access is cache-friendly; pointer chasing is not.",
+    "Virtual memory gives each process its own address space via paging.",
+    "Measure with a profiler before optimising; hardware effects surprise everyone."
+   ],
+   "quiz": {
+    "q": "Iterating a 2-D array row-by-row vs column-by-column in C can differ hugely in speed mainly because of:",
+    "options": [
+     "Compiler version",
+     "CPU cache locality",
+     "Network latency",
+     "Disk fragmentation"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Teach Yourself CS: architecture",
+     "url": "https://teachyourselfcs.com/"
+    },
+    {
+     "title": "Nand2Tetris",
+     "url": "https://www.nand2tetris.org/"
+    }
+   ]
+  },
+  {
+   "id": "hardware-05",
+   "order": 5,
+   "track": "hardware",
+   "level": 3,
+   "minutes": 30,
+   "title": "GPUs, accelerators & why AI needs them",
+   "summary": "SIMD/SIMT parallelism, VRAM limits and the economics of AI hardware.",
+   "points": [
+    "GPUs run thousands of lightweight threads: ideal for matrix multiplication.",
+    "VRAM capacity often limits model size more than raw compute.",
+    "Memory bandwidth, not FLOPs, is frequently the real bottleneck for LLM inference.",
+    "TPUs/NPUs are specialised accelerators; software stacks (CUDA, ROCm) matter as much as silicon."
+   ],
+   "quiz": {
+    "q": "For LLM inference, which resource is commonly the limiting factor?",
+    "options": [
+     "Memory bandwidth and VRAM capacity",
+     "Keyboard latency",
+     "Disk colour depth",
+     "Number of USB ports"
+    ],
+    "answer": 0
+   },
+   "resources": [
+    {
+     "title": "NVIDIA developer: CUDA zone",
+     "url": "https://developer.nvidia.com/cuda-zone"
+    },
+    {
+     "title": "PyTorch tutorials",
+     "url": "https://pytorch.org/tutorials/"
+    }
+   ]
+  },
+  {
+   "id": "hardware-06",
+   "order": 6,
+   "track": "hardware",
+   "level": 3,
+   "minutes": 30,
+   "title": "Virtualization, containers & firmware basics",
+   "summary": "Hypervisors, namespaces/cgroups and how a machine boots.",
+   "points": [
+    "VMs virtualise hardware; containers share the host kernel using namespaces and cgroups.",
+    "Boot flow: firmware (UEFI) -> bootloader -> kernel -> init/systemd.",
+    "Hardware security: TPMs, secure boot, and why firmware updates matter.",
+    "Observability starts at the host: CPU steal, load, I/O wait, thermal throttling."
+   ],
+   "quiz": {
+    "q": "What do containers share with the host?",
+    "options": [
+     "The kernel",
+     "A separate kernel each",
+     "The BIOS only",
+     "Nothing at all"
+    ],
+    "answer": 0
+   },
+   "resources": [
+    {
+     "title": "Docker documentation",
+     "url": "https://docs.docker.com/get-started/"
+    },
+    {
+     "title": "Linux kernel docs",
+     "url": "https://www.kernel.org/doc/html/latest/"
+    }
+   ]
+  },
+  {
+   "id": "programming-01",
+   "order": 1,
+   "track": "programming",
+   "level": 1,
+   "minutes": 30,
+   "title": "Programming fundamentals with Python",
+   "summary": "Variables, control flow, functions and data structures: the universal core.",
+   "points": [
+    "Types, variables, conditionals and loops are the same idea in every language.",
+    "Functions give names to behaviour and enable reuse and testing.",
+    "Lists, dicts and sets cover most everyday data-structure needs.",
+    "Read errors top-to-bottom: the last lines tell you what, the stack trace tells you where."
+   ],
+   "quiz": {
+    "q": "Which structure gives average O(1) lookup by key in Python?",
+    "options": [
+     "list",
+     "dict",
+     "tuple of tuples",
+     "range"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "The Python Tutorial",
+     "url": "https://docs.python.org/3/tutorial/"
+    },
+    {
+     "title": "CS50x",
+     "url": "https://cs50.harvard.edu/x/"
+    }
+   ]
+  },
+  {
+   "id": "programming-02",
+   "order": 2,
+   "track": "programming",
+   "level": 1,
+   "minutes": 25,
+   "title": "Git & collaboration workflow",
+   "summary": "Version control, branches and pull requests are non-negotiable professional skills.",
+   "points": [
+    "Commits are snapshots; branches are cheap pointers to commits.",
+    "Small, focused commits with clear messages make review and debugging easy.",
+    "Pull requests + code review + CI are how teams ship safely.",
+    "Never commit secrets; rotate any key that leaks."
+   ],
+   "quiz": {
+    "q": "What is the safest response to accidentally committing an API key?",
+    "options": [
+     "Delete the file in the next commit",
+     "Revoke/rotate the key immediately",
+     "Ignore it if the repo is private",
+     "Rename the branch"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Pro Git book",
+     "url": "https://git-scm.com/book"
+    },
+    {
+     "title": "GitHub docs",
+     "url": "https://docs.github.com/en/get-started"
+    }
+   ]
+  },
+  {
+   "id": "programming-03",
+   "order": 3,
+   "track": "programming",
+   "level": 2,
+   "minutes": 35,
+   "title": "Data structures, algorithms & Big-O",
+   "summary": "Choose the right structure; reason about growth, not stopwatch time.",
+   "points": [
+    "Big-O describes how cost grows with input size.",
+    "Hash maps, heaps, trees and graphs cover most interview and real-world needs.",
+    "Sorting and binary search: know the complexity and when to rely on the standard library.",
+    "Premature optimisation is the root of bugs; profile first."
+   ],
+   "quiz": {
+    "q": "Binary search on a sorted array of n items runs in:",
+    "options": [
+     "O(n)",
+     "O(log n)",
+     "O(n^2)",
+     "O(1)"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "roadmap.sh: Data Structures & Algorithms",
+     "url": "https://roadmap.sh/datastructures-and-algorithms"
+    },
+    {
+     "title": "Teach Yourself CS",
+     "url": "https://teachyourselfcs.com/"
+    }
+   ]
+  },
+  {
+   "id": "programming-04",
+   "order": 4,
+   "track": "programming",
+   "level": 2,
+   "minutes": 35,
+   "title": "Web fundamentals: HTML, CSS, JavaScript & HTTP",
+   "summary": "The browser is the world's most deployed runtime.",
+   "points": [
+    "HTML structures content, CSS presents it, JavaScript adds behaviour.",
+    "HTTP is request/response: methods, status codes, headers, cookies.",
+    "The DOM is a tree; render with textContent, not innerHTML, for untrusted data.",
+    "Accessibility (semantic HTML, focus, contrast) is part of quality, not an extra."
+   ],
+   "quiz": {
+    "q": "Which is the safest way to show user-supplied text in the DOM?",
+    "options": [
+     "innerHTML",
+     "textContent",
+     "document.write",
+     "eval"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "MDN Learn Web Development",
+     "url": "https://developer.mozilla.org/en-US/docs/Learn"
+    },
+    {
+     "title": "web.dev Learn",
+     "url": "https://web.dev/learn"
+    }
+   ]
+  },
+  {
+   "id": "programming-05",
+   "order": 5,
+   "track": "programming",
+   "level": 3,
+   "minutes": 40,
+   "title": "Testing, design & clean architecture",
+   "summary": "Tests, modularity and boundaries keep systems changeable.",
+   "points": [
+    "Unit tests are fast and isolated; integration tests check seams; a few end-to-end tests guard journeys.",
+    "Separate pure logic from I/O so most code is trivially testable.",
+    "Prefer composition, small interfaces and explicit dependencies.",
+    "Refactor continuously under test coverage; avoid big-bang rewrites."
+   ],
+   "quiz": {
+    "q": "Why separate pure logic from I/O?",
+    "options": [
+     "It looks tidy",
+     "It makes logic easy to test without mocks",
+     "It reduces file size",
+     "It speeds up the CPU"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Martin Fowler: Refactoring & testing articles",
+     "url": "https://martinfowler.com/"
+    },
+    {
+     "title": "roadmap.sh: Software Design",
+     "url": "https://roadmap.sh/software-design-architecture"
+    }
+   ]
+  },
+  {
+   "id": "programming-06",
+   "order": 6,
+   "track": "programming",
+   "level": 3,
+   "minutes": 40,
+   "title": "Secure coding & the OWASP Top 10",
+   "summary": "Injection, broken access control and supply-chain risk are the usual suspects.",
+   "points": [
+    "Never build SQL/shell/HTML by string concatenation; use parameters and encoders.",
+    "Authorisation must be checked server-side on every request.",
+    "Pin and audit dependencies; least privilege for tokens and CI.",
+    "Log security events, never secrets."
+   ],
+   "quiz": {
+    "q": "The standard defence against SQL injection is:",
+    "options": [
+     "Escaping quotes by hand",
+     "Parameterised queries",
+     "Longer passwords",
+     "Hiding the database port"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "OWASP Top Ten",
+     "url": "https://owasp.org/www-project-top-ten/"
+    },
+    {
+     "title": "roadmap.sh: Cyber Security",
+     "url": "https://roadmap.sh/cyber-security"
+    }
+   ]
+  },
+  {
+   "id": "networking-01",
+   "order": 1,
+   "track": "networking",
+   "level": 1,
+   "minutes": 25,
+   "title": "How the internet works: IP, DNS, ports",
+   "summary": "Follow a request from the browser to a server and back.",
+   "points": [
+    "IP addresses locate hosts; ports locate services on a host.",
+    "DNS maps names to IPs and is cached at many layers.",
+    "Routers forward packets hop by hop; NAT lets many devices share one public IP.",
+    "Tools: ping, traceroute, dig, curl -v."
+   ],
+   "quiz": {
+    "q": "Which tool resolves a hostname to IP addresses?",
+    "options": [
+     "dig / nslookup",
+     "chmod",
+     "top",
+     "git"
+    ],
+    "answer": 0
+   },
+   "resources": [
+    {
+     "title": "Cloudflare Learning Center",
+     "url": "https://www.cloudflare.com/learning/"
+    },
+    {
+     "title": "roadmap.sh: Computer Science",
+     "url": "https://roadmap.sh/computer-science"
+    }
+   ]
+  },
+  {
+   "id": "networking-02",
+   "order": 2,
+   "track": "networking",
+   "level": 1,
+   "minutes": 30,
+   "title": "The OSI & TCP/IP models",
+   "summary": "Layers explain where a problem lives.",
+   "points": [
+    "Link, Internet, Transport, Application are the working layers of TCP/IP.",
+    "TCP gives reliable ordered streams; UDP is lightweight and unordered.",
+    "Switches work on MAC addresses (L2), routers on IPs (L3).",
+    "Debug bottom-up: cable/Wi-Fi, IP, DNS, port, application."
+   ],
+   "quiz": {
+    "q": "Which protocol is typically chosen for low-latency streaming where occasional loss is acceptable?",
+    "options": [
+     "TCP",
+     "UDP",
+     "FTP",
+     "SMTP"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Cloudflare: What is the OSI model?",
+     "url": "https://www.cloudflare.com/learning/ddos/glossary/open-systems-interconnection-model-osi/"
+    },
+    {
+     "title": "IETF RFC index",
+     "url": "https://www.rfc-editor.org/"
+    }
+   ]
+  },
+  {
+   "id": "networking-03",
+   "order": 3,
+   "track": "networking",
+   "level": 2,
+   "minutes": 30,
+   "title": "HTTP, TLS & HTTPS in depth",
+   "summary": "What actually happens when you type https://...",
+   "points": [
+    "TLS handshake negotiates keys and verifies the server certificate chain.",
+    "HTTP/2 multiplexes streams over one connection; HTTP/3 runs over QUIC (UDP).",
+    "Know status classes: 2xx ok, 3xx redirect, 4xx client error, 5xx server error.",
+    "Caching headers (Cache-Control, ETag) are a free performance win."
+   ],
+   "quiz": {
+    "q": "A 502 status code most likely means:",
+    "options": [
+     "Client sent a bad request",
+     "A gateway got an invalid response from upstream",
+     "Resource not found",
+     "Auth required"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "MDN: HTTP",
+     "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP"
+    },
+    {
+     "title": "Cloudflare: What is TLS?",
+     "url": "https://www.cloudflare.com/learning/ssl/transport-layer-security-tls/"
+    }
+   ]
+  },
+  {
+   "id": "networking-04",
+   "order": 4,
+   "track": "networking",
+   "level": 2,
+   "minutes": 30,
+   "title": "Subnets, CIDR, routing & VPNs",
+   "summary": "Plan address space and understand private networks.",
+   "points": [
+    "CIDR notation /24 means the first 24 bits are the network (256 addresses).",
+    "Private ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16.",
+    "Routing tables pick the most specific matching route.",
+    "VPNs and overlays connect private networks securely over the internet."
+   ],
+   "quiz": {
+    "q": "How many addresses are in a /24 IPv4 block?",
+    "options": [
+     "24",
+     "128",
+     "256",
+     "1024"
+    ],
+    "answer": 2
+   },
+   "resources": [
+    {
+     "title": "Cloudflare Learning Center",
+     "url": "https://www.cloudflare.com/learning/"
+    },
+    {
+     "title": "Wireshark: learn packet analysis",
+     "url": "https://www.wireshark.org/docs/"
+    }
+   ]
+  },
+  {
+   "id": "networking-05",
+   "order": 5,
+   "track": "networking",
+   "level": 3,
+   "minutes": 35,
+   "title": "Load balancing, CDNs & reliability",
+   "summary": "Scale and protect services at the edge.",
+   "points": [
+    "L4 vs L7 load balancers: connection-level vs request-aware routing.",
+    "CDNs cache close to users; cache keys and invalidation are the hard parts.",
+    "Health checks, timeouts, retries with backoff and circuit breakers prevent cascades.",
+    "DDoS mitigation = absorb at the edge + rate limit + autoscale."
+   ],
+   "quiz": {
+    "q": "Retries without backoff during an outage can cause:",
+    "options": [
+     "Faster recovery",
+     "A retry storm that worsens the outage",
+     "Lower latency",
+     "Nothing"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Google SRE books",
+     "url": "https://sre.google/books/"
+    },
+    {
+     "title": "Cloudflare blog",
+     "url": "https://blog.cloudflare.com/"
+    }
+   ]
+  },
+  {
+   "id": "networking-06",
+   "order": 6,
+   "track": "networking",
+   "level": 3,
+   "minutes": 35,
+   "title": "Network security & packet analysis",
+   "summary": "Firewalls, zero trust and reading traffic with Wireshark.",
+   "points": [
+    "Default-deny firewalls and least-privilege network policy shrink the blast radius.",
+    "Zero trust: authenticate and authorise every request, not just the perimeter.",
+    "Wireshark/tcpdump reveal handshakes, retransmits and DNS failures.",
+    "Keep software patched; follow CISA advisories for actively exploited bugs."
+   ],
+   "quiz": {
+    "q": "Which tool captures and inspects packets?",
+    "options": [
+     "Wireshark",
+     "Figma",
+     "Postman only",
+     "npm"
+    ],
+    "answer": 0
+   },
+   "resources": [
+    {
+     "title": "Wireshark documentation",
+     "url": "https://www.wireshark.org/docs/"
+    },
+    {
+     "title": "CISA: known exploited vulnerabilities",
+     "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+    }
+   ]
+  },
+  {
+   "id": "ai-01",
+   "order": 1,
+   "track": "ai",
+   "level": 1,
+   "minutes": 30,
+   "title": "What is AI/ML? Core concepts",
+   "summary": "Supervised, unsupervised and reinforcement learning in plain terms.",
+   "points": [
+    "ML learns patterns from data instead of hand-written rules.",
+    "Training fits parameters; inference uses them; evaluation uses held-out data.",
+    "Overfitting: great on training data, poor on new data.",
+    "Garbage in, garbage out: data quality beats model cleverness."
+   ],
+   "quiz": {
+    "q": "A model scores 99% on training data but 60% on test data. This is:",
+    "options": [
+     "Underfitting",
+     "Overfitting",
+     "Perfect",
+     "Data leakage only"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Google ML Crash Course",
+     "url": "https://developers.google.com/machine-learning/crash-course"
+    },
+    {
+     "title": "Hugging Face Learn",
+     "url": "https://huggingface.co/learn"
+    }
+   ]
+  },
+  {
+   "id": "ai-02",
+   "order": 2,
+   "track": "ai",
+   "level": 1,
+   "minutes": 30,
+   "title": "Python for data & your first model",
+   "summary": "NumPy, pandas and scikit-learn/PyTorch basics.",
+   "points": [
+    "Vectorised array operations are faster and clearer than loops.",
+    "Split data into train/validation/test before looking at results.",
+    "Start with a simple baseline; complexity must earn its place.",
+    "Track experiments so results are reproducible."
+   ],
+   "quiz": {
+    "q": "Why keep a separate test set?",
+    "options": [
+     "To train faster",
+     "To get an unbiased estimate of real-world performance",
+     "To reduce file size",
+     "To tune hyperparameters"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "PyTorch tutorials",
+     "url": "https://pytorch.org/tutorials/"
+    },
+    {
+     "title": "Hugging Face Learn",
+     "url": "https://huggingface.co/learn"
+    }
+   ]
+  },
+  {
+   "id": "ai-03",
+   "order": 3,
+   "track": "ai",
+   "level": 2,
+   "minutes": 35,
+   "title": "Neural networks & transformers",
+   "summary": "How deep learning and attention power modern models.",
+   "points": [
+    "Neurons compute weighted sums plus a non-linearity; backprop adjusts weights via gradients.",
+    "Transformers use self-attention to relate every token to every other token.",
+    "Pre-training on huge corpora then fine-tuning/aligning gives today's LLMs.",
+    "Scaling laws: more data, parameters and compute generally improve capability."
+   ],
+   "quiz": {
+    "q": "The key mechanism in a transformer is:",
+    "options": [
+     "Convolution only",
+     "Self-attention",
+     "Decision trees",
+     "K-means"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Hugging Face: LLM course",
+     "url": "https://huggingface.co/learn"
+    },
+    {
+     "title": "arXiv: Attention Is All You Need",
+     "url": "https://arxiv.org/abs/1706.03762"
+    }
+   ]
+  },
+  {
+   "id": "ai-04",
+   "order": 4,
+   "track": "ai",
+   "level": 2,
+   "minutes": 35,
+   "title": "Prompting & building with the Claude API",
+   "summary": "Reliable LLM features start with clear instructions, structure and evaluation.",
+   "points": [
+    "Be specific: role, task, constraints, output format and examples.",
+    "Use system prompts for stable rules; keep untrusted content clearly separated.",
+    "Structured outputs (JSON schema) make responses machine-safe.",
+    "Stream long responses and always handle refusals, rate limits and max_tokens."
+   ],
+   "quiz": {
+    "q": "What should you do with text fetched from the web before acting on it?",
+    "options": [
+     "Treat it as trusted instructions",
+     "Treat it as untrusted data",
+     "Execute it",
+     "Add it to the system prompt"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Claude API docs",
+     "url": "https://platform.claude.com/docs"
+    },
+    {
+     "title": "Anthropic news & research",
+     "url": "https://www.anthropic.com/news"
+    }
+   ]
+  },
+  {
+   "id": "ai-05",
+   "order": 5,
+   "track": "ai",
+   "level": 3,
+   "minutes": 40,
+   "title": "RAG, tools & agents",
+   "summary": "Give models knowledge and the ability to act, safely.",
+   "points": [
+    "RAG: retrieve relevant chunks, then ground the answer in them with citations.",
+    "Tool use lets a model call functions; validate every tool input and constrain permissions.",
+    "Agents loop plan -> act -> observe; add budgets, timeouts and human approval for risky steps.",
+    "Prompt injection is the SQL injection of agents: never let retrieved content change the rules."
+   ],
+   "quiz": {
+    "q": "Best defence against prompt injection in agents?",
+    "options": [
+     "Trust all tool output",
+     "Least-privilege tools, input validation and treating retrieved text as data",
+     "Longer prompts",
+     "Disable logging"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Claude API: tool use",
+     "url": "https://platform.claude.com/docs"
+    },
+    {
+     "title": "OWASP Top 10 for LLM applications",
+     "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+    }
+   ]
+  },
+  {
+   "id": "ai-06",
+   "order": 6,
+   "track": "ai",
+   "level": 3,
+   "minutes": 40,
+   "title": "Evaluating, deploying & governing AI systems",
+   "summary": "If you cannot measure it, you cannot improve it.",
+   "points": [
+    "Build an eval set from real examples; track quality, cost and latency together.",
+    "Use LLM-as-judge carefully and spot-check with humans.",
+    "Monitor drift, add guardrails, log with privacy in mind.",
+    "Know licensing, safety and regulatory basics (e.g. NIST AI RMF)."
+   ],
+   "quiz": {
+    "q": "What belongs in a good LLM eval set?",
+    "options": [
+     "Only easy examples",
+     "Representative real inputs incl. edge cases",
+     "Random noise",
+     "Only the training prompts"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "NIST",
+     "url": "https://www.nist.gov/artificial-intelligence"
+    },
+    {
+     "title": "Anthropic research",
+     "url": "https://www.anthropic.com/research"
+    }
+   ]
+  },
+  {
+   "id": "cloud-01",
+   "order": 1,
+   "track": "cloud",
+   "level": 1,
+   "minutes": 25,
+   "title": "Cloud fundamentals: IaaS, PaaS, SaaS",
+   "summary": "What the cloud is, what you rent, and who is responsible for what.",
+   "points": [
+    "IaaS = virtual machines/networks; PaaS = managed runtimes; SaaS = finished software.",
+    "Shared responsibility: provider secures the cloud, you secure what you put in it.",
+    "Regions and availability zones are your blast-radius and latency tools.",
+    "Pay-as-you-go needs budgets and alerts from day one."
+   ],
+   "quiz": {
+    "q": "Under shared responsibility, who secures your application data and IAM policies?",
+    "options": [
+     "The cloud provider",
+     "You, the customer",
+     "Your ISP",
+     "Nobody"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "AWS getting started",
+     "url": "https://aws.amazon.com/getting-started/"
+    },
+    {
+     "title": "Microsoft Learn training",
+     "url": "https://learn.microsoft.com/en-us/training/"
+    }
+   ]
+  },
+  {
+   "id": "cloud-02",
+   "order": 2,
+   "track": "cloud",
+   "level": 1,
+   "minutes": 30,
+   "title": "Linux servers, SSH & Docker basics",
+   "summary": "Package an app once, run it anywhere.",
+   "points": [
+    "Images are immutable templates; containers are running instances.",
+    "A Dockerfile describes how to build the image; keep layers small and cache-friendly.",
+    "Never bake secrets into images; inject at runtime.",
+    "SSH keys beat passwords; disable password login."
+   ],
+   "quiz": {
+    "q": "Where should secrets live for a containerised app?",
+    "options": [
+     "Hard-coded in the Dockerfile",
+     "Injected at runtime via env/secret manager",
+     "In git history",
+     "In the image README"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Docker Get Started",
+     "url": "https://docs.docker.com/get-started/"
+    },
+    {
+     "title": "roadmap.sh: Docker",
+     "url": "https://roadmap.sh/docker"
+    }
+   ]
+  },
+  {
+   "id": "cloud-03",
+   "order": 3,
+   "track": "cloud",
+   "level": 2,
+   "minutes": 35,
+   "title": "CI/CD & Infrastructure as Code",
+   "summary": "Automate build, test, deploy and the infrastructure itself.",
+   "points": [
+    "CI runs tests on every change; CD ships passing builds automatically.",
+    "Infrastructure as Code (Terraform, CloudFormation) makes environments reviewable and repeatable.",
+    "Use environments, approvals and rollbacks for safe releases.",
+    "Keep pipelines fast and secrets scoped with least privilege."
+   ],
+   "quiz": {
+    "q": "The main benefit of Infrastructure as Code is:",
+    "options": [
+     "Prettier dashboards",
+     "Repeatable, reviewable infrastructure",
+     "No need for networks",
+     "Free hosting"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Terraform docs",
+     "url": "https://developer.hashicorp.com/terraform/docs"
+    },
+    {
+     "title": "GitHub Actions docs",
+     "url": "https://docs.github.com/en/actions"
+    }
+   ]
+  },
+  {
+   "id": "cloud-04",
+   "order": 4,
+   "track": "cloud",
+   "level": 2,
+   "minutes": 35,
+   "title": "Cloud identity, storage & databases",
+   "summary": "IAM, object storage and managed databases are the core building blocks.",
+   "points": [
+    "IAM: least privilege, roles over long-lived keys, MFA for humans.",
+    "Object storage (S3-style) is durable and cheap; block storage backs VMs.",
+    "Managed databases handle backups and patching; you own schema, indexes and queries.",
+    "Encrypt at rest and in transit; classify data."
+   ],
+   "quiz": {
+    "q": "Prefer which for workloads calling cloud APIs?",
+    "options": [
+     "Long-lived root access keys",
+     "Short-lived role credentials",
+     "Shared passwords",
+     "Public buckets"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "AWS documentation",
+     "url": "https://aws.amazon.com/documentation/"
+    },
+    {
+     "title": "Google Cloud docs",
+     "url": "https://cloud.google.com/docs"
+    }
+   ]
+  },
+  {
+   "id": "cloud-05",
+   "order": 5,
+   "track": "cloud",
+   "level": 3,
+   "minutes": 40,
+   "title": "Kubernetes & orchestration",
+   "summary": "Run and heal containers at scale.",
+   "points": [
+    "Pods are the smallest unit; Deployments manage replicas and rollouts.",
+    "Services and Ingress expose workloads; ConfigMaps/Secrets configure them.",
+    "Requests/limits, probes and autoscaling keep apps healthy and cost-aware.",
+    "Don't adopt Kubernetes until simpler platforms stop fitting."
+   ],
+   "quiz": {
+    "q": "What restarts a failed pod and keeps N replicas running?",
+    "options": [
+     "A Deployment / ReplicaSet controller",
+     "The README",
+     "A DNS record",
+     "Git"
+    ],
+    "answer": 0
+   },
+   "resources": [
+    {
+     "title": "Kubernetes tutorials",
+     "url": "https://kubernetes.io/docs/tutorials/"
+    },
+    {
+     "title": "CNCF",
+     "url": "https://www.cncf.io/"
+    }
+   ]
+  },
+  {
+   "id": "cloud-06",
+   "order": 6,
+   "track": "cloud",
+   "level": 3,
+   "minutes": 40,
+   "title": "Observability, SRE & cost control (FinOps)",
+   "summary": "SLIs/SLOs, tracing and spend discipline.",
+   "points": [
+    "Metrics, logs and traces answer 'is it broken, where, and why'.",
+    "SLOs and error budgets balance reliability with feature velocity.",
+    "Blameless postmortems turn incidents into improvements.",
+    "Tag resources, set budgets and right-size to stop silent cost creep."
+   ],
+   "quiz": {
+    "q": "An error budget is:",
+    "options": [
+     "Money for bug fixes",
+     "Allowed unreliability implied by an SLO",
+     "A log file",
+     "A firewall rule"
+    ],
+    "answer": 1
+   },
+   "resources": [
+    {
+     "title": "Google SRE books",
+     "url": "https://sre.google/books/"
+    },
+    {
+     "title": "Microsoft Learn",
+     "url": "https://learn.microsoft.com/en-us/training/"
+    }
+   ]
+  }
+ ]
+}
