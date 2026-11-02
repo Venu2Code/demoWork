@@ -1,13 +1,24 @@
 {
-  "name": "calculator-app",
+  "name": "gold-tracker-india",
   "version": "1.0.0",
-  "description": "Full-stack calculator: REST API, safe expression parser and web UI (zero dependencies)",
-  "main": "src/server.js",
-  "scripts": {
-    "start": "node src/server.js",
-    "test": "node --test test/*.test.js",
-    "coverage": "node --test --experimental-test-coverage test/*.test.js"
+  "private": true,
+  "description": "Gold & silver rates for India with history, news-aware 3-day outlook, buy/sell meters and a private purchase tracker.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
   },
-  "engines": { "node": ">=20" },
-  "license": "MIT"
+  "scripts": {
+    "serve": "node scripts/serve.mjs",
+    "prices": "node scripts/fetch-live.mjs",
+    "prices:dry": "node scripts/fetch-live.mjs --dry-run",
+    "outlook": "node scripts/update-outlook.mjs",
+    "outlook:dry": "node scripts/update-outlook.mjs --dry-run",
+    "backfill": "node scripts/backfill-history.mjs",
+    "import": "node scripts/import-csv.mjs",
+    "validate": "node scripts/validate-content.mjs",
+    "test": "node --test \"tests/*.test.mjs\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0"
+  }
 }

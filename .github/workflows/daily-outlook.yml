@@ -1,0 +1,25 @@
+name: Daily news and forecast
+on:
+  schedule:
+    - cron: "30 0 * * *"    # 06:00 IST, before the Indian market day starts
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: daily-outlook
+jobs:
+  outlook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Claude news search (allowlisted sites only) + forecast ranges
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node scripts/update-outlook.mjs

@@ -1,0 +1,22 @@
+name: Backfill 3-year history
+# Run manually once after creating the database. Safe to re-run (upserts by day).
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Dry run first (fails loudly if sources are unreachable or the history is under 3 years)
+        run: node scripts/backfill-history.mjs --dry-run
+      - name: Write to the database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node scripts/backfill-history.mjs
