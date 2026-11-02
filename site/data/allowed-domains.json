@@ -11,7 +11,8 @@
     "kubernetes.io", "docs.docker.com", "cncf.io", "aws.amazon.com", "learn.microsoft.com", "azure.microsoft.com",
     "cloudflare.com", "blog.cloudflare.com", "developer.hashicorp.com",
     "ietf.org", "rfc-editor.org", "wireshark.org", "owasp.org", "nist.gov", "cisa.gov",
-    "infoq.com", "thenewstack.io", "arstechnica.com", "theregister.com"
+    "infoq.com", "thenewstack.io", "arstechnica.com", "theregister.com",
+    "ibjarates.com"
   ],
   "blocked": ["bit.ly", "t.co", "tinyurl.com", "goo.gl", "medium.com", "substack.com", "pastebin.com", "reddit.com", "x.com", "twitter.com", "facebook.com", "t.me"]
 }
