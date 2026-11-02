@@ -18,6 +18,7 @@ PATTERNS = {
     "AWS access key": r"\bAKIA[0-9A-Z]{16}\b",
     "GitHub token": r"\bgh[pousr]_[A-Za-z0-9]{30,}\b",
     "Private key": r"-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----",
+    "Supabase secret key": r"\bsb_secret_[A-Za-z0-9_-]{16,}",
 }
 for name, rx in PATTERNS.items():
     if re.search(rx, text):

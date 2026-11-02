@@ -1,4 +1,5 @@
 // Read-only public data + the signed-in user's private purchases, all through Supabase REST (no libraries).
+// The publishable (or legacy anon) key goes ONLY in the apikey header. Authorization is sent only with a signed-in user's JWT.
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 import { istDay } from "./lib/pricing.js";
 
@@ -6,7 +7,7 @@ export const configured = () => !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 const base = () => SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/";
 
 export async function request(path, { token, method = "GET", body, headers = {} } = {}) {
-  const res = await fetch(base() + path, { method, body: body ? JSON.stringify(body) : undefined, headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`, "Content-Type": "application/json", ...headers } });
+  const res = await fetch(base() + path, { method, body: body ? JSON.stringify(body) : undefined, headers: { apikey: SUPABASE_ANON_KEY, ...(token ? { Authorization: `Bearer ${token}` } : {}), "Content-Type": "application/json", ...headers } });
   const text = await res.text(); const json = text ? JSON.parse(text) : null;
   if (!res.ok) throw new Error(json?.message || `Request failed (${res.status})`);
   return json;

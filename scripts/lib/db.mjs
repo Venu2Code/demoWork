@@ -2,7 +2,8 @@
 export function db(env = process.env) {
   const base = env.SUPABASE_URL?.replace(/\/$/, ""), key = env.SUPABASE_SERVICE_KEY;
   if (!base || !key) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_KEY are required");
-  const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
+  // Secret keys (sb_secret_...) are not JWTs, so they travel in the apikey header only. Legacy service_role keys work the same way.
+  const headers = { apikey: key, "Content-Type": "application/json" };
   const call = async (path, init = {}) => {
     const res = await fetch(`${base}/rest/v1/${path}`, { ...init, headers: { ...headers, ...(init.headers || {}) } });
     const text = await res.text();

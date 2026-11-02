@@ -12,9 +12,9 @@ Today's **gold (18K / 22K / 24K) and silver rate in India**, per gram and per 10
 
 ## Setup (about 30 minutes)
 1. **Rename the repo** if you like (GitHub, Settings, General). The site uses relative paths.
-2. **Supabase** (free): create a project, open *SQL Editor*, paste and run `supabase/schema.sql`. Authentication, Providers, Email: enable; turn on *Confirm email*; set minimum password length to 12; consider MFA. Copy *Project URL* and the *anon public* key into `site/js/config.js` (public by design).
+2. **Supabase** (free): create a project, open *SQL Editor*, paste and run `supabase/schema.sql`. Authentication, Providers, Email: enable; turn on *Confirm email*; set minimum password length to 12; consider MFA. Copy the *Project URL* and the **publishable key** (starts with `sb_publishable_`; older projects call it the *anon* key) into `site/js/config.js`. It is public by design.
 3. **Price provider**: create an account at goldapi.io and copy the API key.
-4. **GitHub secrets** (Settings, Secrets and variables, Actions): `GOLDAPI_KEY`, `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (the *service_role* key, server-side only; never put it in `site/`). Optional variable `CLAUDE_MODEL`.
+4. **GitHub secrets** (Settings, Secrets and variables, Actions): `GOLDAPI_KEY`, `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (the **secret key**, starts with `sb_secret_`; older projects call it *service_role*. Server-side only: never put it in `site/` or share it). Optional variable `CLAUDE_MODEL`.
 5. **Duty**: check `config/pricing.json` (`import_duty_pct`) against the current rule.
 6. Run the workflows once from the Actions tab, in this order: **Backfill 3-year history**, **Live prices**, **Daily news and forecast**. Read each log: the jobs refuse to write data that fails checks and say why.
 7. **Pages**: merge to `main`, then Settings, Pages, Source: GitHub Actions. Your site: `https://<you>.github.io/<repo>/`.
