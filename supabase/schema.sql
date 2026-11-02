@@ -10,11 +10,15 @@ create table if not exists public.price_ticks (
   id             bigint generated always as identity primary key,
   metal          text not null check (metal in ('gold','silver')),
   purity         smallint not null check (purity in (24,22,18,999,925)),
-  price_per_gram numeric(12,2) not null check (price_per_gram > 0),   -- estimated Indian rate, INR
-  raw_per_gram   numeric(12,2) check (raw_per_gram > 0),              -- international spot converted to INR, before adjustment
-  adj_pct        numeric(6,2) not null default 0,                     -- import duty / premium applied
+  -- estimated Indian rate, INR
+  price_per_gram numeric(12,2) not null check (price_per_gram > 0),
+  -- international spot converted to INR, before adjustment
+  raw_per_gram   numeric(12,2) check (raw_per_gram > 0),
+  -- import duty / premium applied
+  adj_pct        numeric(6,2) not null default 0,
   source         text not null,
-  observed_at    timestamptz not null,                                -- when the provider says the price was true
+  -- when the provider says the price was true
+  observed_at    timestamptz not null,
   created_at     timestamptz not null default now(),
   unique (metal, purity, source, observed_at)
 );
@@ -29,7 +33,8 @@ create table if not exists public.daily_prices (
   high        numeric(12,2) not null,
   low         numeric(12,2) not null,
   close       numeric(12,2) not null,
-  change_count int not null default 0,                                -- number of price changes seen that day
+  -- number of price changes seen that day
+  change_count int not null default 0,
   source      text not null,
   is_estimate boolean not null default true,
   primary key (day, metal, purity),
@@ -53,8 +58,10 @@ create table if not exists public.news_items (
   url         text check (url is null or url ~ '^https://'),
   source      text,
   impact      text not null check (impact in ('bullish','bearish','neutral','uncertain')),
-  event_time  timestamptz,                                            -- for 'upcoming' (release/meeting time)
-  for_date    date not null,                                          -- IST day the item is shown for
+  -- for 'upcoming' items: the release/meeting time
+  event_time  timestamptz,
+  -- IST day the item is shown for
+  for_date    date not null,
   created_at  timestamptz not null default now()
 );
 create index if not exists news_for_date on public.news_items (for_date desc, kind);
@@ -80,12 +87,13 @@ create table if not exists public.forecasts (
 create table if not exists public.purchases (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null default auth.uid() references auth.users(id) on delete cascade,
-  purchased_on  date not null check (purchased_on <= current_date and purchased_on >= date '2000-01-01'),
+  purchased_on  date not null check (purchased_on >= date '2000-01-01'),
   metal         text not null check (metal in ('gold','silver')),
   purity        smallint not null check (purity in (24,22,18,999,925)),
   form          text not null default 'other' check (form in ('coin','bar','jewellery','digital','other')),
   grams         numeric(12,3) not null check (grams > 0 and grams <= 100000),
-  total_paid    numeric(14,2) not null check (total_paid > 0),          -- INCLUDING GST, making and other charges
+  -- INCLUDING GST, making and other charges
+  total_paid    numeric(14,2) not null check (total_paid > 0),
   gst_amount    numeric(14,2) not null default 0 check (gst_amount >= 0),
   making_charges numeric(14,2) not null default 0 check (making_charges >= 0),
   other_charges numeric(14,2) not null default 0 check (other_charges >= 0),
