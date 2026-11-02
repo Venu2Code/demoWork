@@ -1,14 +1,20 @@
 {
-  "name": "learncsinsimple",
+  "name": "gold-tracker-india",
   "version": "1.0.0",
   "private": true,
-  "description": "learnCSinSimple - learn hardware, programming, networking, AI and cloud with daily Claude-curated updates and progress tracking.",
+  "description": "Gold & silver rates for India with history, news-aware 3-day outlook, buy/sell meters and a private purchase tracker.",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "serve": "node scripts/serve.mjs",
-    "update": "node scripts/update-news.mjs",
-    "update:dry": "node scripts/update-news.mjs --dry-run",
+    "prices": "node scripts/fetch-live.mjs",
+    "prices:dry": "node scripts/fetch-live.mjs --dry-run",
+    "outlook": "node scripts/update-outlook.mjs",
+    "outlook:dry": "node scripts/update-outlook.mjs --dry-run",
+    "backfill": "node scripts/backfill-history.mjs",
+    "import": "node scripts/import-csv.mjs",
     "validate": "node scripts/validate-content.mjs",
     "test": "node --test \"tests/*.test.mjs\""
   },

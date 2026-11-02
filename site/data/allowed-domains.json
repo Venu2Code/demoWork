@@ -1,18 +1,20 @@
 {
-  "_comment": "Single source of truth for trusted sources. Used by the daily updater (web_search allowed_domains), the validator, the Claude Code hooks and the browser. Keep <= 64 entries (API limit). Subdomains are included automatically.",
-  "allowed": [
-    "developer.mozilla.org", "web.dev", "developers.google.com", "cloud.google.com", "sre.google",
-    "docs.python.org", "python.org", "nodejs.org", "go.dev", "rust-lang.org", "typescriptlang.org", "react.dev",
-    "git-scm.com", "github.blog", "docs.github.com", "stackoverflow.blog", "martinfowler.com",
-    "roadmap.sh", "cs50.harvard.edu", "freecodecamp.org", "teachyourselfcs.com", "nand2tetris.org",
-    "kernel.org", "developer.nvidia.com", "tomshardware.com", "hackaday.com", "lwn.net",
-    "anthropic.com", "platform.claude.com", "docs.anthropic.com", "openai.com", "huggingface.co", "pytorch.org",
-    "arxiv.org", "deepmind.google", "research.google", "ai.meta.com",
-    "kubernetes.io", "docs.docker.com", "cncf.io", "aws.amazon.com", "learn.microsoft.com", "azure.microsoft.com",
-    "cloudflare.com", "blog.cloudflare.com", "developer.hashicorp.com",
-    "ietf.org", "rfc-editor.org", "wireshark.org", "owasp.org", "nist.gov", "cisa.gov",
-    "infoq.com", "thenewstack.io", "arstechnica.com", "theregister.com",
-    "ibjarates.com"
+  "_comment": "Single source of truth for trusted sources (hooks, validators, updater and browser all read this). 'news' = sites Claude may search for market news (max 64). 'data' = price/FX providers our scripts may call. 'allowed' must contain every news and data domain. Subdomains are included automatically.",
+  "news": [
+    "rbi.org.in", "pib.gov.in", "cbic.gov.in", "finmin.nic.in", "incometax.gov.in",
+    "federalreserve.gov", "bls.gov", "bea.gov", "ecb.europa.eu", "imf.org", "bis.org",
+    "gold.org", "mcxindia.com", "cmegroup.com", "lbma.org.uk",
+    "reuters.com", "livemint.com", "economictimes.indiatimes.com", "business-standard.com",
+    "thehindubusinessline.com", "financialexpress.com", "moneycontrol.com", "ndtvprofit.com"
   ],
-  "blocked": ["bit.ly", "t.co", "tinyurl.com", "goo.gl", "medium.com", "substack.com", "pastebin.com", "reddit.com", "x.com", "twitter.com", "facebook.com", "t.me"]
+  "data": ["goldapi.io", "frankfurter.dev", "stooq.com"],
+  "allowed": [
+    "rbi.org.in", "pib.gov.in", "cbic.gov.in", "finmin.nic.in", "incometax.gov.in",
+    "federalreserve.gov", "bls.gov", "bea.gov", "ecb.europa.eu", "imf.org", "bis.org",
+    "gold.org", "mcxindia.com", "cmegroup.com", "lbma.org.uk",
+    "reuters.com", "livemint.com", "economictimes.indiatimes.com", "business-standard.com",
+    "thehindubusinessline.com", "financialexpress.com", "moneycontrol.com", "ndtvprofit.com",
+    "goldapi.io", "frankfurter.dev", "stooq.com"
+  ],
+  "blocked": ["bit.ly", "t.co", "tinyurl.com", "goo.gl", "medium.com", "substack.com", "pastebin.com", "reddit.com", "x.com", "twitter.com", "facebook.com", "t.me", "telegram.org", "whatsapp.com"]
 }

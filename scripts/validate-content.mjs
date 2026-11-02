@@ -1,32 +1,11 @@
 #!/usr/bin/env node
-// Fails (exit 1) if any shipped content breaks the rules. Run in CI, in the daily job and from the Claude Code hook.
-import { readFileSync, existsSync } from "node:fs";
-import path from "node:path";
-import { DATA_DIR, loadAllowlist, isAllowedUrl, sanitizeNewsItem, TRACKS } from "./lib/content.mjs";
-
-const errors = [];
-const list = loadAllowlist();
-const load = (f) => { try { return JSON.parse(readFileSync(path.join(DATA_DIR, f), "utf8")); } catch (e) { errors.push(`${f}: ${e.message}`); return null; } };
-if (list.allowed.length > 64) errors.push("allowlist > 64 domains");
-
-const cur = load("curriculum.json");
-if (cur) {
-  const ids = new Set();
-  for (const t of cur.tracks) if (!TRACKS.includes(t.id)) errors.push(`unknown track ${t.id}`);
-  for (const l of cur.lessons) {
-    if (ids.has(l.id)) errors.push(`duplicate lesson id ${l.id}`);
-    ids.add(l.id);
-    if (!cur.tracks.some((t) => t.id === l.track)) errors.push(`${l.id}: bad track`);
-    if (![1, 2, 3].includes(l.level)) errors.push(`${l.id}: bad level`);
-    if (!l.points?.length) errors.push(`${l.id}: no key points`);
-    if (!l.quiz || l.quiz.options?.length < 2 || !(l.quiz.answer >= 0 && l.quiz.answer < l.quiz.options.length)) errors.push(`${l.id}: bad quiz`);
-    for (const r of l.resources ?? []) if (!isAllowedUrl(r.url, list)) errors.push(`${l.id}: resource not allowed ${r.url}`);
-  }
-}
-const news = existsSync(path.join(DATA_DIR, "news.json")) ? load("news.json") : null;
-if (news) for (const i of news.items) { try { sanitizeNewsItem(i, list); } catch (e) { errors.push(`news ${i.id}: ${e.message}`); } }
-const res = load("resources.json");
-if (res) for (const r of res.resources) if (!isAllowedUrl(r.url, list)) errors.push(`resource not allowed ${r.url}`);
-
-if (errors.length) { console.error("Content validation FAILED:\n - " + errors.join("\n - ")); process.exit(1); }
-console.log(`Content OK (${cur?.lessons.length ?? 0} lessons, ${news?.items.length ?? 0} news, ${res?.resources.length ?? 0} resources)`);
+// Static checks used by CI and the Claude Code post-edit hook: allowlist sanity + config sanity.
+import { loadAllowlist, loadPricing } from "./lib/common.mjs";
+const errors = [], l = loadAllowlist(), p = loadPricing();
+if (l.news.length > 64) errors.push("news allowlist > 64 domains (API limit)");
+for (const d of [...l.news, ...l.data]) if (!l.allowed.includes(d)) errors.push(`${d} is in news/data but missing from allowed`);
+for (const d of l.allowed) if (l.blocked.includes(d)) errors.push(`${d} is both allowed and blocked`);
+for (const m of ["gold", "silver"]) { const x = p[m]; if (!(x?.import_duty_pct >= 0 && x.import_duty_pct <= 40) || !(x.local_premium_pct >= 0 && x.local_premium_pct <= 20)) errors.push(`pricing.${m} out of range`); }
+if (p.min_history_days < 1095) errors.push("min_history_days must be >= 1095 (3 years)");
+if (errors.length) { console.error("Validation FAILED:\n - " + errors.join("\n - ")); process.exit(1); }
+console.log(`Config OK (${l.news.length} news domains, ${l.data.length} data providers)`);

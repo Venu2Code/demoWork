@@ -1,23 +1,24 @@
 # Project log (read me first in every Claude session)
 
-**Product:** learnCSinSimple, a static learning site (GitHub Pages) with 5 tracks, a progress tracker, and a daily Claude-curated news feed.
+**Product:** Gold Tracker India. Public rates + private purchase tracker. See CLAUDE.md for the core idea and rules.
 
-## Done
-- [x] Static SPA (vanilla ES modules, strict CSP, no third-party scripts)
-- [x] Curriculum: 30 lessons x 5 tracks (hardware, programming, networking, ai, cloud) + 29 resources
-- [x] Tracker: XP, levels, streaks, daily goal, heatmap, badges, notes, bookmarks, export/import
-- [x] Optional Supabase accounts + sync (REST, RLS) and `sources` table for the curated library
-- [x] Daily updater (Claude API + web search restricted to allowlist, schema + grounding validation)
-- [x] Claude Code hooks (web allowlist, secret guard, post-edit validation), CLAUDE.md, SECURITY.md
-- [x] Workflows: CI, Pages deploy, daily update
+## Status
+- [x] Pure logic + 23 tests: unit conversion, data-quality rules, forecast range, buy/sell meters, P/L, form validation, history building, news validation
+- [x] Supabase schema (public price/news tables, private `purchases` with RLS), SQL syntax-checked (not executed against a live DB yet)
+- [x] Site: Today (market watch, price cards, change log with IST times, 3-day outlook, buy meters), Price history chart, My Gold (login, add purchase, P/L, sell alert, CSV export), How it works
+- [x] Jobs/workflows: live prices (15 min), daily outlook (06:00 IST), manual 3-year backfill, CI, Pages deploy
+- [x] UI tested in a real browser against a fake in-memory Supabase (fixture, not committed)
 
-## Next ideas
-- [ ] More lessons per track (aim 12+), each with a hands-on exercise
-- [ ] Weekly "digest" lesson generated from the week's news (human reviewed)
-- [ ] Spaced-repetition review of past quiz questions
-- [ ] Search across lessons; learning-path recommendations from `trending`
+## NOT yet verified against real services (do this first)
+- [ ] Create Supabase project, run `supabase/schema.sql`, check RLS with two test users (user A must not see user B's purchases; anon must get 401/empty)
+- [ ] GoldAPI.io: confirm the response has `price` (INR per troy oz) + `timestamp`, check the free-tier limits vs a 15-minute schedule; adjust `parseGoldApi` if the shape differs
+- [ ] Backfill: confirm Stooq CSV + Frankfurter work from GitHub runners and cover >= 1095 days; else use `scripts/import-csv.mjs`
+- [ ] Check `config/pricing.json` import duty against the current Indian customs rate; compare estimated rate with a local jeweller / IBJA for a few days and tune `local_premium_pct`
+- [ ] First `daily-outlook` run: inspect rejected items in the log; confirm search results/links are on the allowlist
+
+## Ideas for later (keep within the core idea)
+- City-wise rates; price alerts by email; sell-lot ordering (FIFO) with capital-gains notes; silver purchases insights; PWA/offline; Hindi UI; second price provider for cross-checking (reject if they differ >3%)
 
 ## Decisions
-- Static hosting + JSON content: free, fast, no server to attack. Supabase only for optional accounts.
-- AI content is never trusted: allowlist -> schema -> grounding (URL must appear in search results) -> text sanitiser -> rendered with textContent only.
-- Anthropic API key lives ONLY in GitHub Actions secrets. The browser only ever sees the Supabase anon key.
+- IBJA could not be reached from the dev sandbox, so the hybrid source was chosen: open data for history, a metals API for live prices, duty applied in config, everything labelled as estimated.
+- Static site + Supabase: free, fast, few moving parts; all private data behind RLS.

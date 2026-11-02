@@ -1,1 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#6d5efc"/><text x="32" y="42" font-family="monospace" font-size="28" font-weight="700" text-anchor="middle" fill="#fff">&lt;/&gt;</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#d4a017"/><circle cx="32" cy="32" r="24" fill="none" stroke="#fff3c4" stroke-width="3"/><text x="32" y="43" font-family="Georgia,serif" font-size="30" font-weight="700" text-anchor="middle" fill="#fff8e1">₹</text></svg>

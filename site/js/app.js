@@ -1,41 +1,52 @@
-import { setAllowlist } from "./safe.js";
-import { h } from "./safe.js";
-import * as store from "./store.js";
-import * as sync from "./sync.js";
-import * as V from "./views.js";
+import { h, setAllowlist } from "./safe.js";
+import { skeleton, notice, empty } from "./ui.js";
+import * as api from "./api.js";
+import * as auth from "./auth.js";
+import { todayView } from "./views/today.js";
+import { chartsView } from "./views/charts.js";
+import { myGoldView } from "./views/mygold.js";
+import { aboutView } from "./views/about.js";
 
-const get = async (f) => { const r = await fetch(`data/${f}`, { cache: "no-cache" }); if (!r.ok) throw new Error(f); return r.json(); };
 const main = document.getElementById("main");
-let D = {};
+let token = 0;
 
-function applyTheme() { const t = store.get().settings.theme; const dark = t === "dark" || (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches); document.documentElement.dataset.theme = dark ? "dark" : "light"; }
+const ROUTES = {
+  "": () => todayView(),
+  charts: () => chartsView(),
+  "my-gold": () => myGoldView(render),
+  about: () => aboutView(),
+};
 
-function render() {
-  const [, route = "", arg] = location.hash.replace(/^#\/?/, "/").split("/");
-  const again = () => render();
-  let view;
+async function render() {
+  const route = location.hash.replace(/^#\/?/, "").split("/")[0], mine = ++token;
+  document.querySelectorAll("nav a[data-r]").forEach((a) => a.setAttribute("aria-current", a.dataset.r === route ? "page" : "false"));
+  const view = ROUTES[route] ?? ROUTES[""];
+  if (!api.configured() && route !== "about") { main.replaceChildren(empty("Setup needed", "The database is not connected yet. Follow the README to create the Supabase project and add its public URL and key to site/js/config.js.")); return; }
+  main.replaceChildren(skeleton());
   try {
-    view = route === "" ? V.dashboard(D) : route === "learn" ? V.learnIndex(D) : route === "track" ? V.trackView(D, arg)
-      : route === "lesson" ? V.lessonView(D, arg, again) : route === "news" ? V.newsView(D) : route === "resources" ? V.resourcesView(D)
-      : route === "account" ? V.accountView(D, again) : V.notFound();
-  } catch (e) { console.error(e); view = h("p", {}, "Something went wrong rendering this page."); }
-  main.replaceChildren(view);
-  document.querySelectorAll("nav a[data-r]").forEach((a) => a.setAttribute("aria-current", a.dataset.r === (route === "track" || route === "lesson" ? "learn" : route) ? "page" : "false"));
-  document.title = "learnCSinSimple";
-  window.scrollTo(0, 0); main.focus({ preventScroll: true });
+    const el = await view();
+    if (mine !== token) return;                       // a newer navigation won
+    main.replaceChildren(el); window.scrollTo(0, 0);
+  } catch (e) {
+    console.error(e);
+    if (mine === token) main.replaceChildren(notice("bad", h("b", {}, "We couldn't load the latest data. "), "To avoid showing wrong information, we show nothing rather than guess. Please try again in a minute."));
+  }
 }
 
-async function boot() {
-  store.load(); applyTheme();
-  document.getElementById("theme").addEventListener("click", () => { const dark = document.documentElement.dataset.theme === "dark"; store.setSetting("theme", dark ? "light" : "dark"); applyTheme(); });
-  try {
-    const [allow, cur, res] = await Promise.all([get("allowed-domains.json"), get("curriculum.json"), get("resources.json")]);
-    setAllowlist(allow); D = { cur, res, news: await get("news.json").catch(() => ({ items: [], trending: [] })) };
-  } catch (e) { main.replaceChildren(h("p", {}, "Could not load site data. Please refresh.")); return; }
-  const xpEl = document.getElementById("xp"), update = () => { const s = store.get(), lv = store.levelFor(store.totalXp(s)); xpEl.textContent = `🔥 ${store.streak(s)} · Lv ${lv.level}`; };
-  store.subscribe(update); update();
-  let t, busy = false; store.subscribe(() => { if (busy || !sync.enabled() || !sync.user()) return; clearTimeout(t); t = setTimeout(async () => { busy = true; try { await sync.syncNow(); } catch {} busy = false; }, 3000); });
-  addEventListener("hashchange", render); render();
-  if (sync.enabled() && sync.user()) sync.syncNow().then(render).catch(() => {});
+function theme() {
+  const saved = (() => { try { return localStorage.getItem("gt.theme"); } catch { return null; } })();
+  const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
 }
-boot();
+document.getElementById("theme").addEventListener("click", () => {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next; try { localStorage.setItem("gt.theme", next); } catch { /* ignore */ }
+});
+
+(async function boot() {
+  theme();
+  try { setAllowlist(await (await fetch("data/allowed-domains.json", { cache: "no-cache" })).json()); } catch { /* links render as plain text if the list can't load */ }
+  auth.onChange(() => { if (location.hash.startsWith("#/my-gold")) render(); });
+  addEventListener("hashchange", render);
+  render();
+})();

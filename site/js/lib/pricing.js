@@ -1,0 +1,59 @@
+// Unit conversion + data-quality rules shared by the site, the ingest scripts and the tests.
+// Everything here is pure (no I/O) so it can be unit tested.
+
+export const GRAMS_PER_TROY_OZ = 31.1034768;
+export const FINENESS = { gold: { 24: 0.999, 22: 0.916, 18: 0.75 }, silver: { 999: 0.999, 925: 0.925 } };
+export const GOLD_PURITIES = [24, 22, 18];
+
+/** Spot price per troy ounce (any currency) -> price per gram of the given purity. */
+export function perGram(pricePerOz, metal, purity) {
+  const f = FINENESS[metal]?.[purity];
+  if (!f || !(pricePerOz > 0)) throw new Error(`bad input: ${metal} ${purity} ${pricePerOz}`);
+  // Spot quotes are for ~pure (.999) metal, so scale by purity relative to .999.
+  return (pricePerOz / GRAMS_PER_TROY_OZ) * (f / FINENESS[metal][metal === "gold" ? 24 : 999]);
+}
+
+/** International spot converted to an *estimated* Indian rate by applying import duty (+ optional premium), in %. */
+export const withIndianAdjustment = (price, adjPct) => price * (1 + adjPct / 100);
+export const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+/** Plausible INR/gram bounds. A reading outside is treated as a data error, never displayed. */
+export const SANE = { gold: { 24: [2000, 60000] }, silver: { 999: [20, 1500] } };
+
+/**
+ * Validate a candidate tick set against rules that catch bad data.
+ * ticks: [{metal,purity,price}] for ONE observation time. last: previous accepted ticks (same shape) or [].
+ * Returns { ok, problems[] }.
+ */
+export function validateTicks(ticks, last = [], { maxJumpPct = 8 } = {}) {
+  const problems = [];
+  const by = (arr, m, p) => arr.find((t) => t.metal === m && t.purity === p);
+  for (const t of ticks) {
+    if (!Number.isFinite(t.price) || t.price <= 0) problems.push(`${t.metal} ${t.purity}: not a positive number`);
+    const bounds = SANE[t.metal]?.[t.metal === "gold" ? 24 : 999];
+    const base = t.metal === "gold" ? t.price / (FINENESS.gold[t.purity] / FINENESS.gold[24]) : t.price / (FINENESS.silver[t.purity] / FINENESS.silver[999]);
+    if (bounds && (base < bounds[0] || base > bounds[1])) problems.push(`${t.metal} ${t.purity}: ${t.price} outside sane range`);
+    const prev = by(last, t.metal, t.purity);
+    if (prev && Math.abs(t.price / prev.price - 1) * 100 > maxJumpPct) problems.push(`${t.metal} ${t.purity}: jump >${maxJumpPct}% vs last accepted`);
+  }
+  // Gold purities must be consistent with each other (22k ~ 24k x 0.916/0.999 etc.).
+  const g24 = by(ticks, "gold", 24);
+  if (g24) for (const p of [22, 18]) {
+    const t = by(ticks, "gold", p);
+    if (t) { const exp = g24.price * (FINENESS.gold[p] / FINENESS.gold[24]); if (Math.abs(t.price / exp - 1) > 0.015) problems.push(`gold ${p}k inconsistent with 24k`); }
+  }
+  return { ok: problems.length === 0, problems };
+}
+
+/** True when the latest observation is too old to call "current". Indian bullion trades Mon-Sat; allow weekends. */
+export function staleness(lastCheckedIso, now = new Date()) {
+  if (!lastCheckedIso) return { stale: true, hours: Infinity };
+  const hours = (now - new Date(lastCheckedIso)) / 36e5;
+  return { stale: hours > 3, hours };
+}
+
+/** IST calendar day (YYYY-MM-DD) for a Date/ISO string. */
+export function istDay(d) {
+  const p = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(d));
+  return p;
+}

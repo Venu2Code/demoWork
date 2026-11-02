@@ -1,16 +1,15 @@
-# Security model
+# Security and data-accuracy model
 
-learnCSinSimple is a static site, so there is no server or database to break into. The main risks are (1) malicious or low-quality content entering via the AI pipeline, (2) leaked keys, and (3) XSS. Defences:
-
-| Threat | Control |
+| Concern | Control |
 |---|---|
-| AI pulls content from unwanted sites | Claude's web search is restricted to `allowed_domains`; every item URL is re-checked (https, allowlist, blocklist, no credentials/odd ports) and must appear in the actual search results ("grounding") |
-| Prompt injection from web pages | System prompt marks results as untrusted data; text is sanitised (control chars/`<>` stripped, length caps, suspicious-phrase rejection); the model has no tools except search |
-| Malicious content reaching visitors | Rendered with `textContent` only; links re-validated in the browser; `rel="noopener noreferrer nofollow"` |
-| XSS | Strict CSP (`script-src 'self'`, no inline code, no third-party scripts), no `innerHTML`/`eval` |
-| Leaked API keys | Key only in GitHub Actions secrets; Claude Code hooks block writing key patterns and reading `.env`; `.gitignore` covers env files |
-| Data tampering / accounts | Supabase Row Level Security: users can touch only their own `progress` row; `sources` is read-only to the public |
-| Runaway cost / bad data | Daily job is capped (`max_uses`, one run/day, 300 items kept); empty/invalid output leaves data untouched |
-| Claude Code (dev-time) misuse | `.claude/hooks`: web allowlist for `WebFetch`/shell network commands, secret guard, allowlist/hook edits require confirmation, post-edit content validation |
+| Someone reading another user's gold savings | Postgres Row Level Security on `purchases`: policies are `to authenticated` and require `auth.uid() = user_id`; the anonymous role is revoked entirely. Even with the public anon key, the API returns nothing |
+| Stolen/shared device | Session token only in localStorage (never purchases); auto sign-out after 30 min idle; purchases are held in memory only and cleared on sign-out |
+| Weak accounts | Passwords of 12+ characters enforced in the UI. In Supabase, also turn on "Confirm email", set the minimum password length to 12 and enable MFA (TOTP) |
+| Tampering with public data | `price_ticks`, `daily_prices`, `news_items`, `forecasts` have no insert/update/delete policy and write privileges are revoked: only the server-side service_role key (GitHub Actions secret) can write |
+| Wrong prices | Ingest rejects non-positive, out-of-range or >8% jumps and inconsistent 18K/22K/24K; the UI shows source + IST time, warns when data is over 3 hours old, flags history and rates as estimates |
+| AI inventing or injecting content | Claude searches only `news` allowlist domains; every link must have appeared in real search results and pass allowlist/https checks; text is sanitised and screened; events must be dated today/tomorrow; a bias is clamped to [-1,1] and can only nudge a range computed from real data; on any failure nothing is published |
+| XSS | Strict CSP (`script-src 'self'`, no inline code, `connect-src` only self + Supabase), no `innerHTML`/`eval`, no third-party scripts |
+| Leaked keys | Keys only in GitHub secrets; Claude Code hooks block writing key patterns, reading `.env`, and edits to the allowlist/hooks without confirmation; the service_role key is never in `site/` |
+| Claude Code misuse in development | `.claude/hooks`: web/network allowlist, secret guard, post-edit validation |
 
-Report vulnerabilities privately via GitHub Security Advisories on this repository.
+Report vulnerabilities privately via GitHub Security Advisories.

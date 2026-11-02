@@ -1,54 +1,41 @@
-# learnCSinSimple
+# Gold Tracker India
 
-Learn **Hardware, Programming, Networking, AI and Cloud** from foundations to advanced, track your progress (XP, levels, streaks, badges), and stay current with a **daily news and resource feed curated by Claude** from trusted sources only.
+Today's **gold (18K / 22K / 24K) and silver rate in India**, per gram and per 10 g, with every price change of the day and its **IST time**, 3 years of price history, news that can move tomorrow's rate, a clearly labelled 3-day outlook, "good time to buy?" and "reached your sell target?" meters, and a **private tracker** for your own purchases (profit or loss including GST and charges).
 
-- 30 lessons across 5 tracks (each with key ideas, a quiz, notes, vetted resources) + a resource library
-- Progress tracker: daily goal ring, streaks, 15-week activity heatmap, badges, bookmarks, export/import
-- Daily auto-update: GitHub Action -> Claude API (web search limited to an allowlist) -> validated -> committed -> redeployed
-- Optional accounts + cross-device sync with Supabase (free tier)
-- Hosted free on GitHub Pages. No build step, no front-end dependencies.
+> Information only, not financial advice. Rates are **estimates** (international price converted to INR plus import duty). Your jeweller's rate, GST and making charges will differ. See `SECURITY.md` for how wrong data is prevented.
 
-## Quick start (local)
+## How it works
+- **Live prices**: a GitHub Action calls a metals API every 15 minutes, validates the numbers, and saves a row only when the price changes.
+- **History**: ~3 years of daily estimates built from open data (global price x official USD/INR x duty), or from your own CSV.
+- **News + outlook**: each morning Claude searches a fixed list of trusted sites for overnight and upcoming events. Code checks every item. The 3-day range is computed from real price swings; the AI can only nudge it slightly.
+- **Your gold**: sign in, record each purchase (date, grams, total paid incl. GST/charges). Each row is locked to your account by Postgres Row Level Security.
+
+## Setup (about 30 minutes)
+1. **Rename the repo** if you like (GitHub, Settings, General). The site uses relative paths.
+2. **Supabase** (free): create a project, open *SQL Editor*, paste and run `supabase/schema.sql`. Authentication, Providers, Email: enable; turn on *Confirm email*; set minimum password length to 12; consider MFA. Copy *Project URL* and the *anon public* key into `site/js/config.js` (public by design).
+3. **Price provider**: create an account at goldapi.io and copy the API key.
+4. **GitHub secrets** (Settings, Secrets and variables, Actions): `GOLDAPI_KEY`, `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (the *service_role* key, server-side only; never put it in `site/`). Optional variable `CLAUDE_MODEL`.
+5. **Duty**: check `config/pricing.json` (`import_duty_pct`) against the current rule.
+6. Run the workflows once from the Actions tab, in this order: **Backfill 3-year history**, **Live prices**, **Daily news and forecast**. Read each log: the jobs refuse to write data that fails checks and say why.
+7. **Pages**: merge to `main`, then Settings, Pages, Source: GitHub Actions. Your site: `https://<you>.github.io/<repo>/`.
+
+If the free history sources are unreachable, use your own file: `node scripts/import-csv.mjs file.csv gold usd-oz` (see header comment for formats).
+
+## Local development
 ```bash
 npm install
-npm run serve        # http://localhost:8080
 npm test && npm run validate
+npm run serve           # http://localhost:8080
 ```
-
-## Deploy on GitHub Pages
-1. Rename the repository to **learnCSinSimple** (GitHub -> Settings -> General -> Repository name). The site uses relative paths, so no code changes are needed.
-2. Merge this branch into `main` (open a pull request).
-3. Settings -> **Pages** -> Build and deployment -> Source: **GitHub Actions**.
-4. The `Deploy to GitHub Pages` workflow publishes `site/`. Your URL: `https://<your-username>.github.io/learnCSinSimple/`.
-
-## Daily updates with Claude
-1. Create an API key in the Anthropic Console.
-2. Repo -> Settings -> Secrets and variables -> Actions -> **New repository secret** `ANTHROPIC_API_KEY`. (Optional variable `CLAUDE_MODEL`, default `claude-opus-5-5`; a cheaper model such as `claude-sonnet-5-5` works too.)
-3. Actions -> **Daily learning update** -> Run workflow to test. It then runs every day at 05:17 UTC.
-4. Local test: copy `.env.example` to `.env`, set the key, run `export $(grep -v '^#' .env | xargs) && npm run update:dry`.
-
-How it stays safe: the search tool is limited to `site/data/allowed-domains.json`; each item is validated (https, allowlisted host, no shorteners, sanitised text, URL must appear in real search results); if nothing valid comes back, nothing is changed. Add a trusted site by editing the allowlist (max 64 domains) and opening a PR.
-
-## Accounts & database (Supabase)
-1. Create a free project at supabase.com. SQL Editor -> paste and run `supabase/schema.sql`.
-2. Authentication -> Providers -> Email: enabled (turn "Confirm email" on for production).
-3. Settings -> API: copy **Project URL** and the **anon public** key into `site/js/config.js` (these are public by design; Row Level Security protects data).
-4. Optional: add repository secrets `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` so the daily job also stores every curated source in the `sources` table (your single library of materials). **Never** put the service key in `config.js`.
-
-## Working with Claude Code on this project
-- `CLAUDE.md` is the project memory (architecture, commands, hard rules). `docs/PROGRESS.md` is the running log.
-- `.claude/settings.json` + `.claude/hooks/` enforce: allowlisted web access only, no secrets written or `.env` read, confirmation before changing the allowlist or hooks, automatic content validation after data edits. See `SECURITY.md`.
-- To make this a Claude *Project* on claude.ai: create a project, add `CLAUDE.md`, `README.md`, `SECURITY.md` and `docs/PROGRESS.md` as project knowledge, and keep `docs/PROGRESS.md` updated after each session.
-
-## Adding content
-Edit `site/data/curriculum.json` (see `CLAUDE.md` for the lesson shape), run `npm run validate`, commit. Ideas live in `docs/PROGRESS.md`.
+`npm run prices:dry` and `npm run outlook:dry` call the real APIs with keys from your environment and write nothing.
 
 ## Layout
 ```
-site/            deployed static site (index.html, css/, js/, data/)
-scripts/         daily updater, validator, shared rules, dev server
-supabase/        schema.sql (tables + Row Level Security)
-.github/         CI, Pages deploy, daily update workflows
-.claude/         Claude Code settings + guard hooks
-tests/           node:test suites
+site/        static site (index.html, css/, js/ with js/lib pure logic, views/, data/allowed-domains.json)
+scripts/     data jobs: fetch-live, backfill-history, import-csv, update-outlook (+ lib/)
+supabase/    schema.sql (tables + Row Level Security)
+config/      pricing.json (duty/premium)
+.github/     CI, Pages deploy, live-prices, daily-outlook, backfill workflows
+.claude/     Claude Code settings + guard hooks; CLAUDE.md = project memory; docs/PROGRESS.md = running log
+tests/       node:test suites
 ```

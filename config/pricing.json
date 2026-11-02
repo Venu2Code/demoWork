@@ -1,0 +1,7 @@
+{
+  "_comment": "Adjustments turning INTERNATIONAL spot (converted to INR) into an ESTIMATED Indian rate. VERIFY these against current Indian customs duty before launch and update when the government changes them. GST (3% on gold/silver) and making charges are NOT in these rates; the purchase form captures what you actually paid.",
+  "gold":   { "import_duty_pct": 6, "local_premium_pct": 0 },
+  "silver": { "import_duty_pct": 6, "local_premium_pct": 0 },
+  "history_days": 1100,
+  "min_history_days": 1095
+}
