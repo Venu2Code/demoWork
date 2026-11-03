@@ -21,7 +21,7 @@ function store(r) {
   armIdle(); emit(); return true;
 }
 function armIdle() { clearTimeout(idleTimer); idleTimer = setTimeout(signOut, IDLE_MS); }
-["click", "keydown", "touchstart"].forEach((ev) => addEventListener(ev, () => session && armIdle(), { passive: true }));
+if (typeof addEventListener === "function") ["click", "keydown", "touchstart"].forEach((ev) => addEventListener(ev, () => session && armIdle(), { passive: true }));
 
 export const user = () => session?.user ?? null;
 export async function signUp(email, password) {
@@ -36,3 +36,16 @@ export async function token() {
   return session.access_token;
 }
 if (session) armIdle();
+
+/** Turn Supabase's technical messages into plain language the user can act on. */
+export function explain(message) {
+  const m = String(message || "");
+  if (/invalid login credentials/i.test(m)) return "Email or password is wrong, or you haven't confirmed your email yet. Check your inbox (and spam) for the confirmation link.";
+  if (/email not confirmed/i.test(m)) return "Please confirm your email first. Open the link we sent you (check spam), then sign in.";
+  if (/already registered|already been registered/i.test(m)) return "This email already has an account. Click Sign in instead.";
+  if (/rate limit|too many/i.test(m)) return "Too many attempts or emails sent. Please wait a few minutes and try again.";
+  if (/failed to fetch|networkerror|load failed/i.test(m)) return "Couldn't reach the server. Check your internet connection and try again.";
+  if (/signups? not allowed|signup_disabled/i.test(m)) return "New sign-ups are switched off for this site.";
+  if (/password/i.test(m)) return m;
+  return m || "Something went wrong. Please try again.";
+}

@@ -11,6 +11,7 @@ Today's **gold (18K / 22K / 24K) and silver rate in India**, per gram and per 10
 - **Your gold**: sign in, record each purchase (date, grams, total paid incl. GST/charges). Each row is locked to your account by Postgres Row Level Security.
 
 ## Setup (about 30 minutes)
+0. **Make `main` the default branch** (GitHub, Settings, General, Default branch, switch to `main`). Scheduled jobs, the Actions list and the repo's front page all come from the default branch. If it points at an old branch you won't see the Live prices / Backfill / Daily news workflows and the README will be out of date.
 1. **Rename the repo** if you like (GitHub, Settings, General). The site uses relative paths.
 2. **Supabase** (free): create a project, open *SQL Editor*, paste and run `supabase/schema.sql`. Authentication, Providers, Email: enable; turn on *Confirm email*; set minimum password length to 12; consider MFA. Copy the *Project URL* and the **publishable key** (starts with `sb_publishable_`; older projects call it the *anon* key) into `site/js/config.js`. It is public by design.
 3. **Price provider**: create an account at goldapi.io and copy the API key.
@@ -24,8 +25,9 @@ If the free history sources are unreachable, use your own file: `node scripts/im
 ## Local development
 ```bash
 npm install
-npm test && npm run validate
-npm run serve           # http://localhost:8080
+npm test && npm run validate     # 32 unit tests: pricing rules, forecast, meters, profit/loss, history, news checks, auth
+npm run test:e2e                   # 18 real-browser tests against a fake in-memory backend (needs: npx playwright install chromium)
+npm run serve                      # http://localhost:8080
 ```
 `npm run prices:dry` and `npm run outlook:dry` call the real APIs with keys from your environment and write nothing.
 
@@ -37,5 +39,5 @@ supabase/    schema.sql (tables + Row Level Security)
 config/      pricing.json (duty/premium)
 .github/     CI, Pages deploy, live-prices, daily-outlook, backfill workflows
 .claude/     Claude Code settings + guard hooks; CLAUDE.md = project memory; docs/PROGRESS.md = running log
-tests/       node:test suites
+tests/       unit tests (node:test) and tests/e2e (Playwright + fake Supabase)
 ```

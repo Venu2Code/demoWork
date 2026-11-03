@@ -11,7 +11,13 @@ Site is connected to Supabase (`site/js/config.js` has the project URL + publish
 GitHub repo secrets are set: `GOLDAPI_KEY`, `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` (secret key, `sb_secret_...`).
 GitHub fix already applied: Settings > Environments > github-pages > deployment branches must allow `main`.
 
+## Session 2 findings (2026-11-03)
+- ROOT CAUSE of "no data" and the old README on GitHub: the repo's DEFAULT branch was still `claude/full-stack-calculator-app-i4ybvu` (old learning-platform content), not `main`. GitHub lists/schedules workflows only from the default branch, so Live prices / Backfill / Daily news never appeared and never ran. FIX (owner action): Settings > General > Default branch > `main`. The old `Daily learning update` workflow lives only on the old branch; it stops once the default is `main`.
+- "Create account does nothing": the code did show messages but as small grey text with no button feedback. Now a prominent notice + busy buttons + plain-language errors (`auth.explain`).
+- Tests added: `tests/auth.test.mjs` (auth unit tests) and `tests/e2e/` (18 browser tests incl. every sign-up outcome and the private-data journey). A deliberate bug made 7 of them fail, so they do catch regressions. CI runs both.
+
 ## NEXT (in order; always run workflows from branch `main`)
+0. Owner: set default branch to `main`, then run workflows 1-3 below (they will now appear in the Actions list).
 1. Actions > **Backfill 3-year history**: loads `daily_prices`. Not yet run or result unknown. If red, get the error text, fix (likely sources Stooq/Frankfurter format or reachability; fallback `scripts/import-csv.mjs`).
 2. Actions > **Live prices**: fills `price_ticks`; this clears the "No prices yet" message. First real test of `parseGoldApi` (assumes JSON `{price: INR per troy oz, timestamp: unix s}` from the GoldAPI XAU/INR and XAG/INR endpoints). Check GoldAPI free-tier limit vs the 15-minute schedule; reduce frequency in `.github/workflows/live-prices.yml` if needed.
 3. Actions > **Daily news and forecast**: first real Claude run; read the log for rejected items.
