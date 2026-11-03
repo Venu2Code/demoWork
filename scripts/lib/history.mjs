@@ -101,3 +101,10 @@ export async function loadUsdHistory(metal, { getText, env = process.env, start,
   }
   throw new Error(`no ${metal} history source worked. ${tried.join(" | ")}`);
 }
+
+/** Readable error for a non-2xx provider reply: keeps the provider's own explanation (e.g. "symbol not found", "plan does not include..."). */
+export function httpErrorMessage(status, bodyText) {
+  let msg = "";
+  try { const j = JSON.parse(bodyText); msg = j.message || j.error || ""; } catch { msg = String(bodyText || "").replace(/\s+/g, " ").slice(0, 160); }
+  return `HTTP ${status}${msg ? `: ${String(msg).slice(0, 220)}` : ""}`;
+}
