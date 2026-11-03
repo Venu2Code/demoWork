@@ -48,3 +48,11 @@ test("provider parsing + tick building", () => {
   assert.ok(Math.abs(g24.price - Math.round(perGram(400000, "gold", 24) * 1.06 * 100) / 100) < 0.01);
   assert.ok(validateTicks(ticks.map((t) => ({ metal: t.metal, purity: t.purity, price: t.price }))).ok);
 });
+
+test("gold-only mode builds only gold ticks and never touches silver", () => {
+  const q = parseGoldApi({ price: 400000, timestamp: 1793000000 });
+  const ticks = buildTicks({ gold: q }, { gold: { import_duty_pct: 6, local_premium_pct: 0 }, silver: { import_duty_pct: 6, local_premium_pct: 0 } });
+  assert.deepEqual(ticks.map((t) => `${t.metal}${t.purity}`), ["gold24", "gold22", "gold18"]);
+  assert.ok(validateTicks(ticks.map((t) => ({ metal: t.metal, purity: t.purity, price: t.price }))).ok);
+  assert.deepEqual(buildTicks({}, { gold: { import_duty_pct: 6 }, silver: { import_duty_pct: 6 } }), []);
+});

@@ -33,7 +33,7 @@ function signIn(rerender) {
 function purchaseForm(onSaved) {
   const f = {}, msg = h("p", { class: "muted", "aria-live": "polite" });
   const input = (name, label, attrs = {}) => { const el = h("input", { name, ...attrs }); f[name] = el; return h("label", {}, label, el); };
-  const metal = h("select", { name: "metal" }, h("option", { value: "gold" }, "Gold"), h("option", { value: "silver" }, "Silver"));
+  const metal = h("select", { name: "metal" }, h("option", { value: "gold" }, "Gold"), api.hasSilver() ? h("option", { value: "silver" }, "Silver") : null);
   const purity = h("select", { name: "purity" }), form = h("select", { name: "form" }, ["coin", "bar", "jewellery", "digital", "other"].map((x) => h("option", { value: x }, x[0].toUpperCase() + x.slice(1))));
   const fill = () => purity.replaceChildren(...PURITIES[metal.value].map(([v, l]) => h("option", { value: v }, l))); metal.addEventListener("change", fill); fill();
   const today = new Date().toISOString().slice(0, 10);
@@ -65,7 +65,7 @@ export async function myGoldView(rerender) {
     h("div", { class: "titlebar split" }, h("div", {}, h("h1", {}, "My Gold"), h("p", { class: "muted" }, `Signed in as ${auth.user().email} · private to you · signs out after 30 min idle`)), h("button", { class: "btn", type: "button", onclick: () => { auth.signOut(); rerender(); } }, "Sign out")),
     sum.sellNow.length ? notice("good", h("b", {}, `${sum.sellNow.length} purchase${sum.sellNow.length > 1 ? "s have" : " has"} reached your +${SELL_TARGET_PCT}% target. `), "Consider selling those. Check the actual buy-back rate and charges with your seller first.") : null,
     purchases.length ? h("div", { class: "prices" },
-      card("price", h("small", {}, "Metal you hold"), h("div", { class: "big" }, `${sum.grams.gold.toFixed(2)} g gold`), h("div", {}, `${sum.grams.silver.toFixed(2)} g silver`)),
+      card("price", h("small", {}, "Metal you hold"), h("div", { class: "big" }, `${sum.grams.gold.toFixed(2)} g gold`), api.hasSilver() ? h("div", {}, `${sum.grams.silver.toFixed(2)} g silver`) : null),
       card("price", h("small", {}, "You invested (all-in)"), h("div", { class: "big" }, inr(sum.cost))),
       card("price", h("small", {}, "Worth today (est.)"), h("div", { class: "big" }, inr(sum.value))),
       card(`price result ${sign(gain)}`, h("small", {}, gain >= 0 ? "Overall profit" : "Overall loss"), h("div", { class: "big" }, `${arrow(gain)} ${inr(Math.abs(gain))}`), h("div", {}, pct(sum.gainPct, 1)))) : null,

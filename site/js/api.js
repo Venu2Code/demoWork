@@ -21,12 +21,21 @@ async function all(path, opts = {}) {
   }
 }
 
-export const TARGETS = [["gold", 24], ["gold", 22], ["gold", 18], ["silver", 999]];
+const ALL_TARGETS = [["gold", 24], ["gold", 22], ["gold", 18], ["silver", 999]];
+/** Which metals the site tracks. Driven by site/data/schedule.json ("metals"); gold-only until silver is switched on there. */
+export const settings = { metals: ["gold"] };
+export const hasSilver = () => settings.metals.includes("silver");
+export const targets = () => ALL_TARGETS.filter(([m]) => settings.metals.includes(m));
+export async function initSettings() {
+  const s = await loadSchedule();
+  if (Array.isArray(s?.metals)) { const m = s.metals.filter((x) => x === "gold" || x === "silver"); if (m.length) settings.metals = m; }
+  return s;
+}
 
 export async function loadToday() {
   const today = istDay(new Date()), midnight = new Date(`${today}T00:00:00+05:30`).toISOString();
   const [latestRows, ticks, status, dailyToday] = await Promise.all([
-    Promise.all(TARGETS.map(([m, p]) => request(`price_ticks?select=metal,purity,price_per_gram,raw_per_gram,adj_pct,source,observed_at&metal=eq.${m}&purity=eq.${p}&order=observed_at.desc&limit=1`))),
+    Promise.all(targets().map(([m, p]) => request(`price_ticks?select=metal,purity,price_per_gram,raw_per_gram,adj_pct,source,observed_at&metal=eq.${m}&purity=eq.${p}&order=observed_at.desc&limit=1`))),
     request(`price_ticks?select=metal,purity,price_per_gram,observed_at&observed_at=gte.${midnight}&order=observed_at.asc&limit=500`),
     request("ingest_status?select=*"),
     request(`daily_prices?select=metal,purity,open,high,low,close,change_count&day=eq.${today}`),
@@ -35,8 +44,8 @@ export async function loadToday() {
   latestRows.flat().forEach((r) => { latest[r.metal][r.purity] = Number(r.price_per_gram); meta[`${r.metal}${r.purity}`] = r; });
   // previous close = last daily row before today
   const prev = {};
-  await Promise.all(TARGETS.map(async ([m, p]) => { const r = await request(`daily_prices?select=day,close&metal=eq.${m}&purity=eq.${p}&day=lt.${today}&order=day.desc&limit=1`); if (r[0]) prev[`${m}${p}`] = { close: Number(r[0].close), day: r[0].day }; }));
-  return { today, latest, meta, ticks, status, dailyToday, prev };
+  await Promise.all(targets().map(async ([m, p]) => { const r = await request(`daily_prices?select=day,close&metal=eq.${m}&purity=eq.${p}&day=lt.${today}&order=day.desc&limit=1`); if (r[0]) prev[`${m}${p}`] = { close: Number(r[0].close), day: r[0].day }; }));
+  return { today, latest, meta, ticks: ticks.filter((t) => settings.metals.includes(t.metal)), status, dailyToday: dailyToday.filter((r) => settings.metals.includes(r.metal)), prev };
 }
 export const loadSeries = (metal, purity, sinceDay) => all(`daily_prices?select=day,open,high,low,close,is_estimate&metal=eq.${metal}&purity=eq.${purity}${sinceDay ? `&day=gte.${sinceDay}` : ""}&order=day.asc`);
 export async function loadOutlook() {

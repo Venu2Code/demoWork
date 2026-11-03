@@ -1,6 +1,7 @@
 {
-  "_comment": "When live prices are refreshed (India time). MUST match the cron in .github/workflows/live-prices.yml (a test enforces this). Sized for GoldAPI's 300 requests/month: 4 runs x 2 requests x 26 days = 208. days: 0=Sun..6=Sat.",
+  "_comment": "What the live-price job fetches and when (India time). The cron in .github/workflows/live-prices.yml MUST match 'times' and 'days' (a test enforces this). Sized for GoldAPI's 300 requests/month: 8 runs x 1 metal x 26 days = 208. To add silver later, set metals to [\"gold\",\"silver\"] and cut the run times so runs x metals x 26 stays under ~250. days: 0=Sun..6=Sat.",
+  "metals": ["gold"],
   "days": [1, 2, 3, 4, 5, 6],
-  "times": ["10:00", "13:00", "16:00", "19:00"],
-  "graceMinutes": 90
+  "times": ["09:30", "11:00", "12:30", "14:00", "15:30", "17:00", "18:30", "20:00"],
+  "graceMinutes": 60
 }

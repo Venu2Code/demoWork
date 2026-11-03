@@ -24,6 +24,11 @@ GitHub fix already applied: Settings > Environments > github-pages > deployment 
 
 - Backfill run on merged code 2026-11-03: Twelve Data GOLD worked (XAU/USD, 788 trading days, 2023-10-30..2026-11-02, 1099 days) but SILVER (XAG/USD) returned HTTP 404 and the job threw the provider's message away. Fix: errors now include the provider's own message; `--allow-partial` saves the metal that passes and warns about the other. Silver cause still unknown until the next run shows the message (plan restriction vs symbol not found). Fallback for silver: `scripts/import-csv.mjs`.
 
+## Session 3, later
+- Backfill (after PR #4) GREEN: gold history saved (2364 rows = 788 trading days x 3 purities, 2023-10-30..2026-11-02). Silver NOT loaded: Twelve Data says XAG/USD needs the Grow/Venture plan (Basic = gold only). Basic plan is labelled 'internal non-display usage': check terms before public launch of the history chart.
+- DECISION (owner): gold only for now. Silver hidden everywhere in the UI and not fetched (`metals: ["gold"]` in `site/data/schedule.json`); code path kept alive and covered by a browser test. Live prices now 8 runs/day Mon-Sat (09:30..20:00 IST every 90 min) = 208 of 300 requests/month; grace 60 min. 49 unit + 21 browser tests pass.
+- OWNER: merge the PR, then run Daily news and forecast and compare 24K/22K with a local rate.
+
 ## NEXT (in order; always run workflows from branch `main`)
 0. Owner: set default branch to `main`, then run workflows 1-3 below (they will now appear in the Actions list).
 1. Actions > **Backfill 3-year history**: loads `daily_prices`. Not yet run or result unknown. If red, get the error text, fix (likely sources Stooq/Frankfurter format or reachability; fallback `scripts/import-csv.mjs`).

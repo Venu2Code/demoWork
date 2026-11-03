@@ -5,7 +5,7 @@
 //   node scripts/update-outlook.mjs [--dry-run] [--mock file.json]
 import Anthropic from "@anthropic-ai/sdk";
 import { readFileSync } from "node:fs";
-import { loadAllowlist } from "./lib/common.mjs";
+import { loadAllowlist, loadSchedule } from "./lib/common.mjs";
 import { db } from "./lib/db.mjs";
 import { extractJson, validateNews, validateOutlook } from "./lib/outlook.mjs";
 import { forecastRange } from "../site/js/lib/analytics.js";
@@ -13,7 +13,7 @@ import { istDay } from "../site/js/lib/pricing.js";
 
 const args = process.argv.slice(2), DRY = args.includes("--dry-run"), mockAt = args.indexOf("--mock");
 const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
-const TARGETS = [["gold", 24], ["gold", 22], ["gold", 18], ["silver", 999]];
+const TARGETS = [["gold", 24], ["gold", 22], ["gold", 18], ["silver", 999]].filter(([m]) => loadSchedule().metals.includes(m));
 
 const SYSTEM = `You are the market-news analyst for an Indian gold & silver price tracker.
 Use web_search (restricted to a trusted allowlist) to find:

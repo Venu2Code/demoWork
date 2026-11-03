@@ -1,10 +1,12 @@
 name: Live prices
 # Records a price row only when the rate changes. GitHub may delay scheduled runs by a few minutes.
-# Sized for GoldAPI's 300 requests/month: 4 runs/day x 2 requests x 26 days = 208.
-# Times are UTC = 10:00, 13:00, 16:00, 19:00 IST, Monday-Saturday. Keep in sync with site/data/schedule.json (a test checks).
+# Gold only. Sized for GoldAPI's 300 requests/month: 8 runs/day x 1 request x 26 days = 208.
+# Times (UTC) = 09:30, 11:00, 12:30, 14:00, 15:30, 17:00, 18:30, 20:00 IST, Monday-Saturday.
+# Keep in sync with site/data/schedule.json (a test fails if they drift).
 on:
   schedule:
-    - cron: "30 4,7,10,13 * * 1-6"
+    - cron: "0 4,7,10,13 * * 1-6"
+    - cron: "30 5,8,11,14 * * 1-6"
   workflow_dispatch:
 permissions:
   contents: read
