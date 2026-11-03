@@ -18,15 +18,15 @@ const noJunk = async (page) => assert.ok(!/\bnull\b|\bundefined\b|NaN/.test(awai
 test("Today: prices, change log, news, forecast and meters render with data", async () => {
   const { page, errs, ctx } = await open();
   await page.waitForSelector(".price .big"); await page.waitForSelector(".meterc .meter");
-  assert.equal(await page.locator(".prices .price").count(), 4);
+  assert.equal(await page.locator(".prices .price").count(), 3, "gold 24K, 22K, 18K only");
   const card24 = await page.locator(".price").first().innerText();
   assert.match(card24, /Gold 24K/); assert.match(card24, /₹[\d,]+\s*\/ gram/); assert.match(card24, /\/ 10 g/); assert.match(card24, /IST/);
-  assert.match(await page.locator(".price.silver").innerText(), /\/ kg/);
+  assert.ok(!/silver/i.test(await page.locator("main").innerText()), "silver is switched off, so it must not appear anywhere");
   assert.ok((await page.locator(".timeline tbody tr").count()) >= 1, "price change log has rows");
   assert.match(await page.locator(".timeline").innerText(), /IST/);
   assert.equal(await page.locator(".forecast tbody tr").count(), 3);
   assert.match(await page.locator(".forecast").innerText(), /not financial advice/i);
-  assert.equal(await page.locator(".meterc .meter").count(), 2);
+  assert.equal(await page.locator(".meterc .meter").count(), 1);
   assert.match(await page.locator(".watch").innerText(), /Happened overnight/);
   assert.match(await page.locator(".notice").first().innerText(), /estimated Indian rates|out of date/);
   await noJunk(page); assert.deepEqual(errs, []); await ctx.close();
@@ -50,24 +50,24 @@ test("Today: with no data it says so instead of showing numbers", async () => {
   await ctx.close();
 });
 
-test("Today: warns only when a scheduled update was missed (Tuesday 18:30 IST, last check 10:05 IST)", async () => {
-  const { page, ctx } = await open({ lastChecked: "2026-11-03T10:05:00+05:30" }, "", "2026-11-03T18:30:00+05:30");
+test("Today: warns only when a scheduled update was missed (Tuesday 19:45 IST, last check 10:05 IST)", async () => {
+  const { page, ctx } = await open({ lastChecked: "2026-11-03T10:05:00+05:30" }, "", "2026-11-03T19:45:00+05:30");
   await page.waitForSelector(".notice.warn");
   assert.match(await page.locator(".notice.warn").first().innerText(), /may be out of date[\s\S]*scheduled update was missed/i);
   await ctx.close();
 });
 test("Today: no false 'out of date' warning overnight, and the next update time is shown", async () => {
-  const { page, ctx } = await open({ lastChecked: "2026-11-03T19:02:00+05:30" }, "", "2026-11-03T23:00:00+05:30");
+  const { page, ctx } = await open({ lastChecked: "2026-11-03T20:02:00+05:30" }, "", "2026-11-03T23:00:00+05:30");
   await page.waitForSelector(".price .big");
   assert.equal(await page.locator(".notice.warn").count(), 0);
-  assert.match(await page.locator(".titlebar").innerText(), /next update about 4 Nov, 10:00 am IST/i);
+  assert.match(await page.locator(".titlebar").innerText(), /next update about 4 Nov, 09:30 am IST/i);
   await ctx.close();
 });
 test("Today: no false warning on Sunday; next update is Monday morning", async () => {
-  const { page, ctx } = await open({ lastChecked: "2026-11-07T19:02:00+05:30" }, "", "2026-11-08T12:00:00+05:30");
+  const { page, ctx } = await open({ lastChecked: "2026-11-07T20:02:00+05:30" }, "", "2026-11-08T12:00:00+05:30");
   await page.waitForSelector(".price .big");
   assert.equal(await page.locator(".notice.warn").count(), 0);
-  assert.match(await page.locator(".titlebar").innerText(), /next update about 9 Nov, 10:00 am IST/i);
+  assert.match(await page.locator(".titlebar").innerText(), /next update about 9 Nov, 09:30 am IST/i);
   await ctx.close();
 });
 
@@ -89,7 +89,8 @@ test("Price history: ranges, hover read-out and estimate labelling", async () =>
   assert.match(await page.locator(".chart-svg .info").textContent(), /₹[\d,]+ \(estimate\).*high.*low/);
   assert.match(await page.locator(".stats").innerText(), /History from/);
   assert.match(await page.locator("main").innerText(), /Estimated history/);
-  await page.click('.seg button:has-text("Silver")'); await page.waitForSelector(".chart-svg");
+  assert.equal(await page.locator('.seg button:has-text("Silver")').count(), 0, "no silver chart while silver is off");
+  await page.click('.seg button:has-text("Gold 22K")'); await page.waitForSelector(".chart-svg");
   assert.deepEqual(errs, []); await ctx.close();
 });
 
@@ -155,7 +156,9 @@ test("My Gold: full journey. sign up, add purchases, see profit/loss and +50% al
   assert.match(await page.locator(".addform [aria-live]").textContent(), /cannot exceed the total paid/);
   assert.equal(backend.purchases.length, before);
   // numbers: cost vs value, profit/loss, sell alert (synthetic prices are far above 60,000 / 10 g so the +50% target is hit)
+  assert.deepEqual(await page.locator("[name=metal] option").allTextContents(), ["Gold"], "purchase form offers gold only");
   const sum = await page.locator(".prices").innerText();
+  assert.ok(!/silver/i.test(sum));
   assert.match(sum, /10\.00 g gold/); assert.match(sum, /₹60,000/); assert.match(sum, /Overall (profit|loss)/);
   assert.match(await page.locator(".notice.good").innerText(), /reached your \+50% target/);
   assert.match(await page.locator(".lot .verdict").first().innerText(), /Target reached/);
@@ -192,5 +195,22 @@ test("How it works page explains sources and carries the disclaimer", async () =
   const { page, ctx } = await open({}, "about"); await page.waitForSelector(".prose");
   const t = await page.locator("main").innerText();
   assert.match(t, /Where the prices come from/); assert.match(t, /Not financial or investment advice/);
+  assert.match(t, /8 times a day, Monday to Saturday \(09:30, 11:00, 12:30, 14:00, 15:30, 17:00, 18:30, 20:00 IST\)/);
+  assert.ok(!/silver/i.test(t), "silver is off");
   await ctx.close();
+});
+
+test("Silver can be switched back on from schedule.json (the code path stays alive)", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 } }), page = await ctx.newPage();
+  const backend = await wire(page, server.url, makeBackend()), errs = watchErrors(page);
+  await page.route("**/data/schedule.json", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ metals: ["gold", "silver"], days: [1, 2, 3, 4, 5, 6], times: ["10:00", "13:00", "16:00", "19:00"], graceMinutes: 60 }) }));
+  await page.goto(`${server.url}/#/`); await page.waitForSelector(".prices .price"); await page.waitForSelector(".meterc .meter");
+  assert.equal(await page.locator(".prices .price").count(), 4);
+  assert.match(await page.locator(".price.silver").innerText(), /\/ kg/);
+  assert.match(await page.locator(".timeline thead").innerText(), /silver/i);
+  assert.equal(await page.locator(".meterc .meter").count(), 2);
+  assert.match(await page.locator("h1").first().innerText(), /gold & silver/);
+  await page.goto(`${server.url}/#/charts`); await page.waitForSelector(".chart-svg");
+  assert.equal(await page.locator('.seg button:has-text("Silver")').count(), 1);
+  assert.deepEqual(errs, []); await ctx.close();
 });

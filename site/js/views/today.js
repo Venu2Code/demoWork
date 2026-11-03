@@ -5,7 +5,8 @@ import { inr, pct, timeIST, dateIST, dateTimeIST } from "../lib/format.js";
 import { staleness, nextScheduledRun } from "../lib/pricing.js";
 import { buyMeter } from "../lib/analytics.js";
 
-const ROWS = [["Gold 24K", "gold", 24, "999 · pure"], ["Gold 22K", "gold", 22, "916 · jewellery"], ["Gold 18K", "gold", 18, "750"], ["Silver", "silver", 999, "999 · pure"]];
+const ALL_ROWS = [["Gold 24K", "gold", 24, "999 · pure"], ["Gold 22K", "gold", 22, "916 · jewellery"], ["Gold 18K", "gold", 18, "750"], ["Silver", "silver", 999, "999 · pure"]];
+const rowsOn = () => ALL_ROWS.filter((r) => api.settings.metals.includes(r[1]));
 const IMPACT = { bullish: ["Pushes gold up", "up"], bearish: ["Pushes gold down", "down"], neutral: ["Neutral", "flat"], uncertain: ["Unclear impact", "flat"] };
 
 function newsList(items, none) {
@@ -27,7 +28,7 @@ function marketWatch(o) {
 }
 
 function priceCards(d) {
-  return h("div", { class: "prices" }, ROWS.map(([name, metal, purity, sub]) => {
+  return h("div", { class: "prices" }, rowsOn().map(([name, metal, purity, sub]) => {
     const p = d.latest[metal][purity], prev = d.prev[`${metal}${purity}`]?.close, meta = d.meta[`${metal}${purity}`];
     const delta = p && prev ? p - prev : null, dp = delta != null ? (delta / prev) * 100 : null, dec = metal === "silver" ? 2 : 0;
     return card(`price ${metal}`,
@@ -41,6 +42,7 @@ function priceCards(d) {
 }
 
 function timeline(d) {
+  const cols = [["gold24", "Gold 24K"], ["gold22", "Gold 22K"], ["gold18", "Gold 18K"], ...(api.hasSilver() ? [["silver999", "Silver"]] : [])];
   const by = new Map();
   for (const t of d.ticks) (by.get(t.observed_at) || by.set(t.observed_at, {}).get(t.observed_at))[`${t.metal}${t.purity}`] = Number(t.price_per_gram);
   const rows = [...by].map(([at, v]) => ({ at, ...v }));
@@ -48,17 +50,17 @@ function timeline(d) {
   if (!rows.length) return card("timeline", head, h("p", { class: "muted" }, "Rates are refreshed at set times each day (Monday to Saturday). A new row appears each time a check finds a different price."));
   const newest = rows.slice().reverse();
   return card("timeline", head, h("div", { class: "scroll" }, h("table", {},
-    h("thead", {}, h("tr", {}, ["Time", "Gold 24K", "Gold 22K", "Gold 18K", "Silver", "24K move"].map((x) => h("th", { scope: "col" }, x)))),
+    h("thead", {}, h("tr", {}, ["Time", ...cols.map((c) => c[1]), "24K move"].map((x) => h("th", { scope: "col" }, x)))),
     h("tbody", {}, newest.map((r, i) => {
       const older = newest[i + 1], dv = older && r.gold24 != null && older.gold24 != null ? r.gold24 - older.gold24 : null;
-      return h("tr", {}, h("th", { scope: "row" }, timeIST(r.at)), h("td", {}, inr(r.gold24)), h("td", {}, inr(r.gold22)), h("td", {}, inr(r.gold18)), h("td", {}, inr(r.silver999, 2)),
+      return h("tr", {}, h("th", { scope: "row" }, timeIST(r.at)), cols.map(([k]) => h("td", {}, inr(r[k], k.startsWith("silver") ? 2 : 0))),
         h("td", { class: dv == null ? "" : sign(dv) }, dv == null ? "first reading" : `${arrow(dv)} ${inr(Math.abs(dv))}`));
     })))));
 }
 
 function forecastCard(o) {
   if (!o.forecasts.length) return card("forecast", h("h2", {}, "Next 3 days"), h("p", { class: "muted" }, "Forecast not available yet. It appears after the daily update runs."));
-  const sel = h("select", { "aria-label": "Choose metal" }, ROWS.map(([n, m, p]) => h("option", { value: `${m}|${p}` }, n)));
+  const sel = h("select", { "aria-label": "Choose metal" }, rowsOn().map(([n, m, p]) => h("option", { value: `${m}|${p}` }, n)));
   const body = h("div", {});
   const draw = () => {
     const [m, p] = sel.value.split("|"), rows = o.forecasts.filter((r) => r.metal === m && String(r.purity) === p).sort((a, b) => a.horizon - b.horizon);
@@ -80,7 +82,7 @@ function forecastCard(o) {
 
 async function meters() {
   const since = new Date(Date.now() - 420 * 864e5).toISOString().slice(0, 10);
-  const [g, sv] = await Promise.all([api.loadSeries("gold", 24, since), api.loadSeries("silver", 999, since)]);
+  const [g, sv] = await Promise.all([api.loadSeries("gold", 24, since), api.hasSilver() ? api.loadSeries("silver", 999, since) : Promise.resolve([])]);
   const mk = (name, rows) => {
     const m = buyMeter(rows.map((r) => Number(r.close)));
     return card("meterc", h("h3", {}, name), m ? h("div", {},
@@ -90,7 +92,7 @@ async function meters() {
       h("details", {}, h("summary", {}, "How this is worked out"), h("ul", {}, m.parts.map((p) => h("li", {}, `${p.name}: ${p.value}/100 (${p.note})`))))) : h("p", { class: "muted" }, "Needs at least 60 days of history."));
   };
   return card("meters", h("div", { class: "head" }, h("h2", {}, "Is it a good time to buy?"), h("small", {}, "Based on price history only")),
-    h("div", { class: "cols" }, mk("Gold 24K", g), mk("Silver", sv)),
+    h("div", { class: api.hasSilver() ? "cols" : "cols one" }, mk("Gold 24K", g), api.hasSilver() ? mk("Silver", sv) : null),
     h("p", { class: "fine" }, "A guide to whether today's price is high or low compared with the past year, to help you buy in steps. It cannot know the future. Track your own holdings and sell signal under ", h("a", { href: "#/my-gold" }, "My Gold"), "."));
 }
 
@@ -103,7 +105,7 @@ export async function todayView() {
     st.stale ? notice("warn", h("b", {}, "Prices may be out of date. "), src ? `A scheduled update was missed. The last successful check was ${dateTimeIST(src.last_checked)}.` : "No successful check recorded.", " Do not rely on these numbers for a purchase.") : null,
     src && !src.last_ok ? notice("warn", "The latest price check was rejected by our data-quality rules, so the previous values are shown.") : null,
     marketWatch(o),
-    h("div", { class: "titlebar" }, h("h1", {}, "India gold & silver rate today"), h("p", { class: "muted" }, `${dateIST(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · last checked ${src ? dateTimeIST(src.last_checked) : "–"}${nextRun ? ` · next update about ${dateTimeIST(nextRun)}` : ""}`)),
+    h("div", { class: "titlebar" }, h("h1", {}, api.hasSilver() ? "India gold & silver rate today" : "India gold rate today"), h("p", { class: "muted" }, `${dateIST(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · last checked ${src ? dateTimeIST(src.last_checked) : "–"}${nextRun ? ` · next update about ${dateTimeIST(nextRun)}` : ""}`)),
     priceCards(d),
     notice("info", h("b", {}, "These are estimated Indian rates. "), "International price converted to INR plus import duty. Your jeweller's rate, GST (3%) and making charges will differ."),
     t24 ? card("range", h("b", {}, "Today's 24K range: "), `${inr(t24.low)} – ${inr(t24.high)} per gram`) : null,

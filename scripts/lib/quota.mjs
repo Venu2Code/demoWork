@@ -1,7 +1,8 @@
-// Request budget guard for the price provider's monthly limit (GoldAPI free plan: 300 requests/month).
+// Request budget guard for the price provider's monthly limit (GoldAPI plan: 300 requests/month).
 // The running count is kept in the existing ingest_status table (row source = "goldapi.io:usage").
 export const USAGE_SOURCE = "goldapi.io:usage";
-export const REQUESTS_PER_RUN = 2;                       // one call for gold, one for silver
+/** One provider request per metal fetched in a run. */
+export const requestsPerRun = (metals) => Math.max(1, metals.length);
 export const monthKey = (d = new Date()) => new Date(d).toISOString().slice(0, 7);
 export function parseUsage(note, key) { try { const j = JSON.parse(note || ""); return j.month === key ? Math.max(0, Number(j.count) || 0) : 0; } catch { return 0; } }
 export const usageNote = (key, count) => JSON.stringify({ month: key, count });

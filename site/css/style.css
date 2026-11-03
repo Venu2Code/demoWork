@@ -42,3 +42,4 @@ select,input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid va
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 nav a{white-space:nowrap}
 .btnrow{display:flex;gap:10px;flex-wrap:wrap}.authmsg .notice{margin:4px 0 0}.btn:disabled{opacity:.6;cursor:wait}
+.cols.one{grid-template-columns:1fr}

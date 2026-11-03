@@ -3,9 +3,9 @@
 // so price_ticks is the exact log of "what changed, and when". Never writes data that fails validation.
 //   node scripts/fetch-live.mjs [--dry-run] [--mock file.json]
 import { readFileSync } from "node:fs";
-import { loadPricing, safeFetch } from "./lib/common.mjs";
+import { loadPricing, loadSchedule, safeFetch } from "./lib/common.mjs";
 import { db } from "./lib/db.mjs";
-import { USAGE_SOURCE, REQUESTS_PER_RUN, monthKey, parseUsage, usageNote, canSpend, monthlyLimit } from "./lib/quota.mjs";
+import { USAGE_SOURCE, requestsPerRun, monthKey, parseUsage, usageNote, canSpend, monthlyLimit } from "./lib/quota.mjs";
 import { perGram, withIndianAdjustment, round2, validateTicks, istDay, GOLD_PURITIES } from "../site/js/lib/pricing.js";
 
 const args = process.argv.slice(2), DRY = args.includes("--dry-run"), mockAt = args.indexOf("--mock");
@@ -22,9 +22,8 @@ export function parseGoldApi(json) {
 export function buildTicks({ gold, silver }, pricing) {
   const adj = (m) => (pricing[m].import_duty_pct || 0) + (pricing[m].local_premium_pct || 0);
   const out = [];
-  for (const p of GOLD_PURITIES) { const raw = perGram(gold.pricePerOz, "gold", p); out.push({ metal: "gold", purity: p, raw, adj: adj("gold"), price: round2(withIndianAdjustment(raw, adj("gold"))), observedAt: gold.observedAt }); }
-  const raw = perGram(silver.pricePerOz, "silver", 999);
-  out.push({ metal: "silver", purity: 999, raw, adj: adj("silver"), price: round2(withIndianAdjustment(raw, adj("silver"))), observedAt: silver.observedAt });
+  if (gold) for (const p of GOLD_PURITIES) { const raw = perGram(gold.pricePerOz, "gold", p); out.push({ metal: "gold", purity: p, raw, adj: adj("gold"), price: round2(withIndianAdjustment(raw, adj("gold"))), observedAt: gold.observedAt }); }
+  if (silver) { const raw = perGram(silver.pricePerOz, "silver", 999); out.push({ metal: "silver", purity: 999, raw, adj: adj("silver"), price: round2(withIndianAdjustment(raw, adj("silver"))), observedAt: silver.observedAt }); }
   return out;
 }
 
@@ -35,7 +34,7 @@ async function quote(sym, token) {
 }
 
 async function main() {
-  const pricing = loadPricing();
+  const pricing = loadPricing(), metals = loadSchedule().metals, cost = requestsPerRun(metals);
   let quotes;
   if (mockAt >= 0) quotes = JSON.parse(readFileSync(args[mockAt + 1], "utf8"));
   else {
@@ -45,16 +44,19 @@ async function main() {
       const d0 = db(), key = monthKey(), limit = monthlyLimit();
       const row = (await d0.select("ingest_status", `select=note&source=eq.${encodeURIComponent(USAGE_SOURCE)}`))[0];
       const used = parseUsage(row?.note, key);
-      if (!canSpend(used, REQUESTS_PER_RUN, limit)) {
+      if (!canSpend(used, cost, limit)) {
         console.log(`::warning::Monthly request budget reached (${used}/${limit}). Skipping this run to protect your plan. Prices will show as out of date until next month or until you raise GOLDAPI_MONTHLY_LIMIT.`);
         return;
       }
-      await d0.upsert("ingest_status", [{ source: USAGE_SOURCE, last_checked: new Date().toISOString(), last_ok: true, note: usageNote(key, used + REQUESTS_PER_RUN) }], "source");
-      console.log(`request budget: ${used + REQUESTS_PER_RUN}/${limit} used this month (after this run)`);
+      await d0.upsert("ingest_status", [{ source: USAGE_SOURCE, last_checked: new Date().toISOString(), last_ok: true, note: usageNote(key, used + cost) }], "source");
+      console.log(`request budget: ${used + cost}/${limit} used this month (after this run; fetching: ${metals.join(", ")})`);
     }
-    quotes = { gold: await quote("XAU", process.env.GOLDAPI_KEY), silver: await quote("XAG", process.env.GOLDAPI_KEY) };
+    quotes = {};
+    if (metals.includes("gold")) quotes.gold = await quote("XAU", process.env.GOLDAPI_KEY);
+    if (metals.includes("silver")) quotes.silver = await quote("XAG", process.env.GOLDAPI_KEY);
   }
   const ticks = buildTicks(quotes, pricing);
+  if (!ticks.length) throw new Error("nothing to fetch: check \"metals\" in site/data/schedule.json");
   if (DRY) return console.log(JSON.stringify(ticks, null, 1));
 
   const d = db(), now = new Date().toISOString();

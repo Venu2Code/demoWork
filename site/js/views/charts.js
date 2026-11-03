@@ -4,10 +4,11 @@ import * as api from "../api.js";
 import { lineChart } from "../chart.js";
 import { inr, pct, dateIST } from "../lib/format.js";
 
-const ITEMS = [["Gold 24K", "gold", 24], ["Gold 22K", "gold", 22], ["Gold 18K", "gold", 18], ["Silver", "silver", 999]];
+const ALL_ITEMS = [["Gold 24K", "gold", 24], ["Gold 22K", "gold", 22], ["Gold 18K", "gold", 18], ["Silver", "silver", 999]];
 const RANGES = [["1M", 31], ["3M", 92], ["6M", 183], ["1Y", 366], ["3Y", 1096], ["All", 99999]];
 
 export async function chartsView() {
+  const ITEMS = ALL_ITEMS.filter(([, m]) => api.settings.metals.includes(m));
   let item = ITEMS[0], days = 366, series = [];
   const out = h("div", { class: "chartbox" }), stats = h("div", { class: "stats" });
   const draw = () => {

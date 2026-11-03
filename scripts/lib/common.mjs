@@ -5,6 +5,7 @@ import path from "node:path";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const loadAllowlist = () => JSON.parse(readFileSync(path.join(ROOT, "site", "data", "allowed-domains.json"), "utf8"));
+export const loadSchedule = () => JSON.parse(readFileSync(path.join(ROOT, "site", "data", "schedule.json"), "utf8"));
 export const loadPricing = () => JSON.parse(readFileSync(path.join(ROOT, "config", "pricing.json"), "utf8"));
 
 const matches = (host, d) => host === d || host.endsWith("." + d);

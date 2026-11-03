@@ -46,6 +46,7 @@ document.getElementById("theme").addEventListener("click", () => {
 (async function boot() {
   theme();
   try { setAllowlist(await (await fetch("data/allowed-domains.json", { cache: "no-cache" })).json()); } catch { /* links render as plain text if the list can't load */ }
+  await api.initSettings();
   auth.onChange(() => { if (location.hash.startsWith("#/my-gold")) render(); });
   addEventListener("hashchange", render);
   render();
