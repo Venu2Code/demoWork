@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 jobs:
-  test:
+  unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,3 +15,14 @@ jobs:
       - run: npm ci
       - run: npm run validate
       - run: npm test
+  e2e:
+    # Real-browser tests against a fake in-memory backend: pages, sign-up/sign-in, purchases, privacy, mobile layout.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

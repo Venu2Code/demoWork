@@ -1,4 +1,4 @@
-"""Shared helpers for learnCSinSimple Claude Code hooks (stdlib only)."""
+"""Shared helpers for Gold Tracker India Claude Code hooks (stdlib only)."""
 import json, os, re, sys
 from urllib.parse import urlparse
 
@@ -22,7 +22,7 @@ def host_ok(host, lst=None):
 
 def block(msg):
     """Exit code 2 = block the tool call and feed msg back to Claude."""
-    print(f"BLOCKED by learnCSinSimple policy: {msg}", file=sys.stderr)
+    print(f"BLOCKED by Gold Tracker India policy: {msg}", file=sys.stderr)
     sys.exit(2)
 
 def ask(reason):

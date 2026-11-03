@@ -2,7 +2,7 @@ import { h, extLink } from "../safe.js";
 import { card, chip, notice, sign, arrow, meter, empty } from "../ui.js";
 import * as api from "../api.js";
 import { inr, pct, timeIST, dateIST, dateTimeIST } from "../lib/format.js";
-import { staleness } from "../lib/pricing.js";
+import { staleness, nextScheduledRun } from "../lib/pricing.js";
 import { buyMeter } from "../lib/analytics.js";
 
 const ROWS = [["Gold 24K", "gold", 24, "999 · pure"], ["Gold 22K", "gold", 22, "916 · jewellery"], ["Gold 18K", "gold", 18, "750"], ["Silver", "silver", 999, "999 · pure"]];
@@ -45,7 +45,7 @@ function timeline(d) {
   for (const t of d.ticks) (by.get(t.observed_at) || by.set(t.observed_at, {}).get(t.observed_at))[`${t.metal}${t.purity}`] = Number(t.price_per_gram);
   const rows = [...by].map(([at, v]) => ({ at, ...v }));
   const head = h("div", { class: "head" }, h("h2", {}, "Today's price changes"), h("small", {}, rows.length ? `${rows.length} change${rows.length > 1 ? "s" : ""} recorded today (IST)` : "No change recorded yet today"));
-  if (!rows.length) return card("timeline", head, h("p", { class: "muted" }, "Rates are checked every 15 minutes. A new row appears each time the price changes."));
+  if (!rows.length) return card("timeline", head, h("p", { class: "muted" }, "Rates are refreshed at set times each day (Monday to Saturday). A new row appears each time a check finds a different price."));
   const newest = rows.slice().reverse();
   return card("timeline", head, h("div", { class: "scroll" }, h("table", {},
     h("thead", {}, h("tr", {}, ["Time", "Gold 24K", "Gold 22K", "Gold 18K", "Silver", "24K move"].map((x) => h("th", { scope: "col" }, x)))),
@@ -95,15 +95,15 @@ async function meters() {
 }
 
 export async function todayView() {
-  const [d, o] = await Promise.all([api.loadToday(), api.loadOutlook().catch(() => ({ today: d_today(), news: [], forecasts: [] }))]);
+  const [d, o, schedule] = await Promise.all([api.loadToday(), api.loadOutlook().catch(() => ({ today: d_today(), news: [], forecasts: [] })), api.loadSchedule()]);
   if (!Object.keys(d.latest.gold).length) return empty("No prices yet", "The price job has not recorded any rates. See the README to run the first update.");
-  const src = d.status.find((x) => x.source === "goldapi.io"), st = staleness(src?.last_checked), root = h("div", {});
+  const src = d.status.find((x) => x.source === "goldapi.io"), st = staleness(src?.last_checked, new Date(), schedule), nextRun = schedule ? nextScheduledRun(new Date(), schedule) : null, root = h("div", {});
   const t24 = d.dailyToday.find((r) => r.metal === "gold" && r.purity === 24);
   root.append(...[
-    st.stale ? notice("warn", h("b", {}, "Prices may be out of date. "), src ? `Last successful check was ${dateTimeIST(src.last_checked)}.` : "No successful check recorded.", " Do not rely on these numbers for a purchase.") : null,
+    st.stale ? notice("warn", h("b", {}, "Prices may be out of date. "), src ? `A scheduled update was missed. The last successful check was ${dateTimeIST(src.last_checked)}.` : "No successful check recorded.", " Do not rely on these numbers for a purchase.") : null,
     src && !src.last_ok ? notice("warn", "The latest price check was rejected by our data-quality rules, so the previous values are shown.") : null,
     marketWatch(o),
-    h("div", { class: "titlebar" }, h("h1", {}, "India gold & silver rate today"), h("p", { class: "muted" }, `${dateIST(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · last checked ${src ? timeIST(src.last_checked) : "–"}`)),
+    h("div", { class: "titlebar" }, h("h1", {}, "India gold & silver rate today"), h("p", { class: "muted" }, `${dateIST(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · last checked ${src ? dateTimeIST(src.last_checked) : "–"}${nextRun ? ` · next update about ${dateTimeIST(nextRun)}` : ""}`)),
     priceCards(d),
     notice("info", h("b", {}, "These are estimated Indian rates. "), "International price converted to INR plus import duty. Your jeweller's rate, GST (3%) and making charges will differ."),
     t24 ? card("range", h("b", {}, "Today's 24K range: "), `${inr(t24.low)} – ${inr(t24.high)} per gram`) : null,

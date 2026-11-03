@@ -1,7 +1,7 @@
 import { h } from "../safe.js";
 import { card } from "../ui.js";
 export const aboutView = () => h("div", { class: "prose" }, h("h1", {}, "How this site works"),
-  card("", h("h2", {}, "Where the prices come from"), h("p", {}, "Live rates are international gold and silver prices, converted to INR, with Indian import duty added to estimate the Indian rate. Rates are checked every 15 minutes and a new line is saved only when the price actually changes, with the time (IST). So the 'Today's price changes' table is the real log of when the rate moved."),
+  card("", h("h2", {}, "Where the prices come from"), h("p", {}, "Live rates are international gold and silver prices, converted to INR, with Indian import duty added to estimate the Indian rate. Rates are refreshed four times a day, Monday to Saturday (10:00, 13:00, 16:00 and 19:00 IST), and a new line is saved only when the price is different from the last check. So the 'Today's price changes' table shows when we noticed each change, which can be up to a few hours after the market moved. It is not a minute-by-minute record."),
     h("p", {}, "History (about 3 years) is built from the international price and the official USD→INR rate with the same adjustment. It is clearly marked as an estimate. Your jeweller's rate, GST (3%) and making charges are not included.")),
   card("", h("h2", {}, "How we avoid showing wrong numbers"), h("ul", {},
     h("li", {}, "Every price shows its time and source. If data is more than 3 hours old you get a warning."),

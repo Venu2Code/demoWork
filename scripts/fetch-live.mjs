@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs";
 import { loadPricing, safeFetch } from "./lib/common.mjs";
 import { db } from "./lib/db.mjs";
+import { USAGE_SOURCE, REQUESTS_PER_RUN, monthKey, parseUsage, usageNote, canSpend, monthlyLimit } from "./lib/quota.mjs";
 import { perGram, withIndianAdjustment, round2, validateTicks, istDay, GOLD_PURITIES } from "../site/js/lib/pricing.js";
 
 const args = process.argv.slice(2), DRY = args.includes("--dry-run"), mockAt = args.indexOf("--mock");
@@ -39,6 +40,18 @@ async function main() {
   if (mockAt >= 0) quotes = JSON.parse(readFileSync(args[mockAt + 1], "utf8"));
   else {
     if (!process.env.GOLDAPI_KEY) throw new Error("GOLDAPI_KEY is not set");
+    if (!DRY) {
+      // Budget guard: count the requests BEFORE spending them (a failed call still uses quota).
+      const d0 = db(), key = monthKey(), limit = monthlyLimit();
+      const row = (await d0.select("ingest_status", `select=note&source=eq.${encodeURIComponent(USAGE_SOURCE)}`))[0];
+      const used = parseUsage(row?.note, key);
+      if (!canSpend(used, REQUESTS_PER_RUN, limit)) {
+        console.log(`::warning::Monthly request budget reached (${used}/${limit}). Skipping this run to protect your plan. Prices will show as out of date until next month or until you raise GOLDAPI_MONTHLY_LIMIT.`);
+        return;
+      }
+      await d0.upsert("ingest_status", [{ source: USAGE_SOURCE, last_checked: new Date().toISOString(), last_ok: true, note: usageNote(key, used + REQUESTS_PER_RUN) }], "source");
+      console.log(`request budget: ${used + REQUESTS_PER_RUN}/${limit} used this month (after this run)`);
+    }
     quotes = { gold: await quote("XAU", process.env.GOLDAPI_KEY), silver: await quote("XAG", process.env.GOLDAPI_KEY) };
   }
   const ticks = buildTicks(quotes, pricing);

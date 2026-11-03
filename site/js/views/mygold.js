@@ -10,10 +10,24 @@ const PURITIES = { gold: [[24, "24K"], [22, "22K"], [18, "18K"]], silver: [[999,
 
 function signIn(rerender) {
   const email = h("input", { type: "email", autocomplete: "email", required: true, "aria-label": "Email" }), pw = h("input", { type: "password", autocomplete: "current-password", minlength: 12, required: true, "aria-label": "Password" });
-  const msg = h("p", { class: "muted", "aria-live": "polite" });
-  const go = (fn) => async () => { try { msg.textContent = "Please wait…"; const r = await fn(email.value.trim(), pw.value); if (r === "confirm-email") msg.textContent = "Check your email to confirm your account, then sign in."; else rerender(); } catch (e) { msg.textContent = e.message; } };
+  const msg = h("div", { class: "authmsg", "aria-live": "polite" });
+  const say = (kind, text) => msg.replaceChildren(...(text ? [notice(kind, text)] : []));
+  const run = (fn, label, busy) => async (e) => {
+    const btn = e.currentTarget, buttons = btn.parentElement.querySelectorAll("button");
+    const em = email.value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(em)) return say("warn", "Please enter a valid email address.");
+    if (!pw.value) return say("warn", "Please enter your password.");
+    buttons.forEach((b) => { b.disabled = true; }); btn.textContent = busy; say("info", "Please wait…");
+    try {
+      const r = await fn(em, pw.value);
+      if (r === "confirm-email") say("good", `Account created. We sent a confirmation link to ${em}. Open it (check spam too), then come back here and click Sign in.`);
+      else rerender();
+    } catch (err) { say("bad", auth.explain(err.message)); }
+    finally { buttons.forEach((b) => { b.disabled = false; }); btn.textContent = label; }
+  };
   return card("auth", h("h1", {}, "My Gold"), h("p", {}, "Sign in to record your purchases and see whether your savings are in profit or loss. Your records are private to your account: nobody else can read them."),
-    h("div", { class: "form" }, h("label", {}, "Email", email), h("label", {}, "Password (12+ characters)", pw), h("div", {}, h("button", { class: "btn primary", type: "button", onclick: go(auth.signIn) }, "Sign in"), " ", h("button", { class: "btn", type: "button", onclick: go(auth.signUp) }, "Create account")), msg));
+    h("div", { class: "form" }, h("label", {}, "Email", email), h("label", {}, "Password (12+ characters)", pw),
+      h("div", { class: "btnrow" }, h("button", { class: "btn primary", type: "button", onclick: run(auth.signIn, "Sign in", "Signing in…") }, "Sign in"), h("button", { class: "btn", type: "button", onclick: run(auth.signUp, "Create account", "Creating…") }, "Create account")), msg));
 }
 
 function purchaseForm(onSaved) {
