@@ -14,9 +14,12 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - name: Dry run first (fails loudly if sources are unreachable or the history is under 3 years)
+        env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
         run: node scripts/backfill-history.mjs --dry-run
       - name: Write to the database
         env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: node scripts/backfill-history.mjs

@@ -20,6 +20,8 @@ GitHub fix already applied: Settings > Environments > github-pages > deployment 
 - Live prices workflow ran green from `main` (data reaches Supabase). GoldAPI plan is 300 requests/month, so the 15-minute cron was replaced: 4 runs/day Mon-Sat (10:00, 13:00, 16:00, 19:00 IST), counter guard (250/month), schedule-aware 'out of date' warning (no false alarms overnight/Sundays) and a 'next update' time on the Today page. 37 unit + 20 browser tests pass.
 - OWNER MUST: merge the PR into `main` (until then `main` still has the old 15-minute cron) and in the meantime disable the Live prices workflow.
 
+- Backfill failed on 2026-11-03: Stooq returned HTTP 403 to GitHub's runners (automated traffic blocked); Frankfurter FX worked. Replaced Stooq with Twelve Data (`TWELVEDATA_API_KEY` secret, free plan, one request per metal returns up to 5000 daily rows). The job still writes nothing unless both metals cover >= 1095 days with plausible prices. API keys are redacted from all error text (tested). Owner must create the free Twelve Data account, add the secret, merge the PR, then re-run Backfill.
+
 ## NEXT (in order; always run workflows from branch `main`)
 0. Owner: set default branch to `main`, then run workflows 1-3 below (they will now appear in the Actions list).
 1. Actions > **Backfill 3-year history**: loads `daily_prices`. Not yet run or result unknown. If red, get the error text, fix (likely sources Stooq/Frankfurter format or reachability; fallback `scripts/import-csv.mjs`).

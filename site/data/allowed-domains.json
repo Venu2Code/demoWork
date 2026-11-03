@@ -7,14 +7,14 @@
     "reuters.com", "livemint.com", "economictimes.indiatimes.com", "business-standard.com",
     "thehindubusinessline.com", "financialexpress.com", "moneycontrol.com", "ndtvprofit.com"
   ],
-  "data": ["goldapi.io", "frankfurter.dev", "stooq.com"],
+  "data": ["goldapi.io", "frankfurter.dev", "twelvedata.com"],
   "allowed": [
     "rbi.org.in", "pib.gov.in", "cbic.gov.in", "finmin.nic.in", "incometax.gov.in",
     "federalreserve.gov", "bls.gov", "bea.gov", "ecb.europa.eu", "imf.org", "bis.org",
     "gold.org", "mcxindia.com", "cmegroup.com", "lbma.org.uk",
     "reuters.com", "livemint.com", "economictimes.indiatimes.com", "business-standard.com",
     "thehindubusinessline.com", "financialexpress.com", "moneycontrol.com", "ndtvprofit.com",
-    "goldapi.io", "frankfurter.dev", "stooq.com"
+    "goldapi.io", "frankfurter.dev", "twelvedata.com"
   ],
   "blocked": ["bit.ly", "t.co", "tinyurl.com", "goo.gl", "medium.com", "substack.com", "pastebin.com", "reddit.com", "x.com", "twitter.com", "facebook.com", "t.me", "telegram.org", "whatsapp.com"]
 }
