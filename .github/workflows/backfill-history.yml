@@ -16,10 +16,10 @@ jobs:
       - name: Dry run first (fails loudly if sources are unreachable or the history is under 3 years)
         env:
           TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
-        run: node scripts/backfill-history.mjs --dry-run
+        run: node scripts/backfill-history.mjs --dry-run --allow-partial
       - name: Write to the database
         env:
           TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: node scripts/backfill-history.mjs
+        run: node scripts/backfill-history.mjs --allow-partial

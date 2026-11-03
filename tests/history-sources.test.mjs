@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseTwelveData, loadUsdHistory, usdSane } from "../scripts/lib/history.mjs";
+import { parseTwelveData, loadUsdHistory, usdSane, httpErrorMessage } from "../scripts/lib/history.mjs";
 import { redact, safeFetch } from "../scripts/lib/common.mjs";
 
 // Synthetic test series shaped like Twelve Data's time_series response (values are strings, newest first).
@@ -45,4 +45,16 @@ test("provider/HTTP failures are reported without ever printing the API key", as
 test("redact hides keys in URLs and safeFetch refuses unlisted hosts without echoing keys", async () => {
   assert.equal(redact("x https://a.b/c?x=1&apikey=ABC123&y=2"), "x https://a.b/c?x=1&apikey=***&y=2");
   await assert.rejects(() => safeFetch("https://evil.example/data?apikey=TOPSECRET"), (e) => { assert.match(e.message, /refusing/); assert.ok(!e.message.includes("TOPSECRET")); return true; });
+});
+
+test("httpErrorMessage keeps the provider's explanation so failures are diagnosable", () => {
+  assert.equal(httpErrorMessage(404, JSON.stringify({ code: 404, message: "symbol is missing or invalid", status: "error" })), "HTTP 404: symbol is missing or invalid");
+  assert.equal(httpErrorMessage(403, JSON.stringify({ message: "available starting with the Grow plan" })), "HTTP 403: available starting with the Grow plan");
+  assert.equal(httpErrorMessage(502, "<html>Bad gateway</html>"), "HTTP 502: <html>Bad gateway</html>");
+  assert.equal(httpErrorMessage(500, ""), "HTTP 500");
+  assert.ok(httpErrorMessage(500, "x".repeat(5000)).length < 200);
+});
+test("a provider message that echoes the key is scrubbed before it reaches the log", async () => {
+  const getText = async () => { throw new Error(httpErrorMessage(401, JSON.stringify({ message: "key SECRETKEY123 is invalid" }))); };
+  await assert.rejects(() => loadUsdHistory("silver", { ...ctx(), getText }), (e) => { assert.match(e.message, /HTTP 401: key \*\*\* is invalid/); assert.ok(!e.message.includes("SECRETKEY123")); return true; });
 });

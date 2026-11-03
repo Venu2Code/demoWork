@@ -22,6 +22,8 @@ GitHub fix already applied: Settings > Environments > github-pages > deployment 
 
 - Backfill failed on 2026-11-03: Stooq returned HTTP 403 to GitHub's runners (automated traffic blocked); Frankfurter FX worked. Replaced Stooq with Twelve Data (`TWELVEDATA_API_KEY` secret, free plan, one request per metal returns up to 5000 daily rows). The job still writes nothing unless both metals cover >= 1095 days with plausible prices. API keys are redacted from all error text (tested). Owner must create the free Twelve Data account, add the secret, merge the PR, then re-run Backfill.
 
+- Backfill run on merged code 2026-11-03: Twelve Data GOLD worked (XAU/USD, 788 trading days, 2023-10-30..2026-11-02, 1099 days) but SILVER (XAG/USD) returned HTTP 404 and the job threw the provider's message away. Fix: errors now include the provider's own message; `--allow-partial` saves the metal that passes and warns about the other. Silver cause still unknown until the next run shows the message (plan restriction vs symbol not found). Fallback for silver: `scripts/import-csv.mjs`.
+
 ## NEXT (in order; always run workflows from branch `main`)
 0. Owner: set default branch to `main`, then run workflows 1-3 below (they will now appear in the Actions list).
 1. Actions > **Backfill 3-year history**: loads `daily_prices`. Not yet run or result unknown. If red, get the error text, fix (likely sources Stooq/Frankfurter format or reachability; fallback `scripts/import-csv.mjs`).
