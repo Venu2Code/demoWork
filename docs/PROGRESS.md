@@ -29,6 +29,8 @@ GitHub fix already applied: Settings > Environments > github-pages > deployment 
 - DECISION (owner): gold only for now. Silver hidden everywhere in the UI and not fetched (`metals: ["gold"]` in `site/data/schedule.json`); code path kept alive and covered by a browser test. Live prices now 8 runs/day Mon-Sat (09:30..20:00 IST every 90 min) = 208 of 300 requests/month; grace 60 min. 49 unit + 21 browser tests pass.
 - OWNER: merge the PR, then run Daily news and forecast and compare 24K/22K with a local rate.
 
+- Daily news and forecast first run (2026-11-03) RED: Anthropic API said 'Your credit balance is too low' (owner's API account has no credits; not a code bug). Owner must add credits at console.anthropic.com > Plans & Billing (API billing is separate from a claude.ai subscription) and re-run. Robustness fix: if the AI step fails, the job now still publishes the statistical-only forecast (labelled) and exits red. Cheaper option without code changes: repository variable `CLAUDE_MODEL=claude-sonnet-5-5`.
+
 ## NEXT (in order; always run workflows from branch `main`)
 0. Owner: set default branch to `main`, then run workflows 1-3 below (they will now appear in the Actions list).
 1. Actions > **Backfill 3-year history**: loads `daily_prices`. Not yet run or result unknown. If red, get the error text, fix (likely sources Stooq/Frankfurter format or reachability; fallback `scripts/import-csv.mjs`).

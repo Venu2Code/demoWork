@@ -61,9 +61,15 @@ async function main() {
   const gold24 = d ? await closesFor("gold", 24) : [];
   const context = gold24.length > 8 ? `gold 24k last close INR ${gold24.at(-1)}/g; 7-day change ${((gold24.at(-1) / gold24.at(-8) - 1) * 100).toFixed(1)}%.` : "no price context available.";
 
-  let text, seen = null;
+  let text = "", seen = null, aiError = null;
   if (mockAt >= 0) text = readFileSync(args[mockAt + 1], "utf8");
-  else { if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not set"); ({ text, seen } = await askClaude(list, context, today)); }
+  else {
+    if (!process.env.ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not set");
+    // If the AI step fails (no credits, outage, refusal) we still publish the statistical forecast, clearly labelled
+    // "Statistical only", and mark the run red so the problem is noticed.
+    try { ({ text, seen } = await askClaude(list, context, today)); }
+    catch (e) { aiError = e; console.log(`::error::The news/AI step failed, so only a statistical forecast is published: ${String(e.message).slice(0, 300)}`); }
+  }
 
   let raw; try { raw = extractJson(text); } catch (e) { raw = {}; console.warn("no usable model JSON:", e.message); }
   const over = validateNews(raw.overnight, "overnight", { ...ctxDates, seenUrls: seen });
@@ -83,5 +89,6 @@ async function main() {
   if (DRY) return console.log(JSON.stringify({ over: over.items, up: up.items, outlook, sample: forecasts.slice(0, 3) }, null, 1));
   if (hasNews) { await d.delete("news_items", `for_date=eq.${today}`); await d.upsert("news_items", [...over.items, ...up.items], "id"); }
   if (forecasts.length) await d.upsert("forecasts", forecasts, "generated_on,metal,purity,horizon");
+  if (aiError) process.exitCode = 1;      // data is saved, but make the run red so the owner notices
 }
 main().catch((e) => { console.error("outlook update failed:", e.message); process.exit(1); });
