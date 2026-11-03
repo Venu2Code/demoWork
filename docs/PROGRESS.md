@@ -16,10 +16,14 @@ GitHub fix already applied: Settings > Environments > github-pages > deployment 
 - "Create account does nothing": the code did show messages but as small grey text with no button feedback. Now a prominent notice + busy buttons + plain-language errors (`auth.explain`).
 - Tests added: `tests/auth.test.mjs` (auth unit tests) and `tests/e2e/` (18 browser tests incl. every sign-up outcome and the private-data journey). A deliberate bug made 7 of them fail, so they do catch regressions. CI runs both.
 
+## Session 3 (2026-11-03)
+- Live prices workflow ran green from `main` (data reaches Supabase). GoldAPI plan is 300 requests/month, so the 15-minute cron was replaced: 4 runs/day Mon-Sat (10:00, 13:00, 16:00, 19:00 IST), counter guard (250/month), schedule-aware 'out of date' warning (no false alarms overnight/Sundays) and a 'next update' time on the Today page. 37 unit + 20 browser tests pass.
+- OWNER MUST: merge the PR into `main` (until then `main` still has the old 15-minute cron) and in the meantime disable the Live prices workflow.
+
 ## NEXT (in order; always run workflows from branch `main`)
 0. Owner: set default branch to `main`, then run workflows 1-3 below (they will now appear in the Actions list).
 1. Actions > **Backfill 3-year history**: loads `daily_prices`. Not yet run or result unknown. If red, get the error text, fix (likely sources Stooq/Frankfurter format or reachability; fallback `scripts/import-csv.mjs`).
-2. Actions > **Live prices**: fills `price_ticks`; this clears the "No prices yet" message. First real test of `parseGoldApi` (assumes JSON `{price: INR per troy oz, timestamp: unix s}` from the GoldAPI XAU/INR and XAG/INR endpoints). Check GoldAPI free-tier limit vs the 15-minute schedule; reduce frequency in `.github/workflows/live-prices.yml` if needed.
+2. Actions > **Live prices**: fills `price_ticks`; this clears the "No prices yet" message. First real test of `parseGoldApi` (assumes JSON `{price: INR per troy oz, timestamp: unix s}` from the GoldAPI XAU/INR and XAG/INR endpoints). GoldAPI plan = 300 requests/month, so the schedule is 4 runs/day Mon-Sat (cron in `live-prices.yml` must equal `site/data/schedule.json`; test enforces). Quota guard stops calls at 250/month. DONE (Live prices ran green once on 2026-11-03).
 3. Actions > **Daily news and forecast**: first real Claude run; read the log for rejected items.
 4. Privacy test with two accounts (A must not see B's purchases; signed-out sees nothing). Supabase Auth settings: Confirm email ON, min password length 12, consider MFA.
 5. Confirm `config/pricing.json` import duty (currently 6%, from memory) and compare estimated rates with a local jeweller for a few days; tune `local_premium_pct`.

@@ -6,8 +6,9 @@ let server, browser;
 before(async () => { server = await startServer(); browser = await launch(); });
 after(async () => { await browser?.close(); server?.stop(); });
 
-async function open(opts = {}, route = "") {
+async function open(opts = {}, route = "", fixedNow = null) {
   const ctx = await browser.newContext({ viewport: { width: 1200, height: 900 } }), page = await ctx.newPage();
+  if (fixedNow) await page.clock.setFixedTime(new Date(fixedNow));          // deterministic "now" in the browser (India-time strings are explicit)
   const backend = await wire(page, server.url, makeBackend(opts)), errs = watchErrors(page);
   await page.goto(`${server.url}/#/${route}`);
   return { page, backend, errs, ctx };
@@ -49,10 +50,24 @@ test("Today: with no data it says so instead of showing numbers", async () => {
   await ctx.close();
 });
 
-test("Today: warns when the last price check is old", async () => {
-  const { page, ctx } = await open({ staleHours: 6 });
+test("Today: warns only when a scheduled update was missed (Tuesday 18:30 IST, last check 10:05 IST)", async () => {
+  const { page, ctx } = await open({ lastChecked: "2026-11-03T10:05:00+05:30" }, "", "2026-11-03T18:30:00+05:30");
   await page.waitForSelector(".notice.warn");
-  assert.match(await page.locator(".notice.warn").first().innerText(), /may be out of date/i);
+  assert.match(await page.locator(".notice.warn").first().innerText(), /may be out of date[\s\S]*scheduled update was missed/i);
+  await ctx.close();
+});
+test("Today: no false 'out of date' warning overnight, and the next update time is shown", async () => {
+  const { page, ctx } = await open({ lastChecked: "2026-11-03T19:02:00+05:30" }, "", "2026-11-03T23:00:00+05:30");
+  await page.waitForSelector(".price .big");
+  assert.equal(await page.locator(".notice.warn").count(), 0);
+  assert.match(await page.locator(".titlebar").innerText(), /next update about 4 Nov, 10:00 am IST/i);
+  await ctx.close();
+});
+test("Today: no false warning on Sunday; next update is Monday morning", async () => {
+  const { page, ctx } = await open({ lastChecked: "2026-11-07T19:02:00+05:30" }, "", "2026-11-08T12:00:00+05:30");
+  await page.waitForSelector(".price .big");
+  assert.equal(await page.locator(".notice.warn").count(), 0);
+  assert.match(await page.locator(".titlebar").innerText(), /next update about 9 Nov, 10:00 am IST/i);
   await ctx.close();
 });
 

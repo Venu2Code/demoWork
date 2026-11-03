@@ -53,3 +53,6 @@ export async function loadOutlook() {
 export const listPurchases = (token) => request("purchases?select=*&order=purchased_on.desc", { token });
 export const addPurchase = (token, row) => request("purchases", { token, method: "POST", body: row, headers: { Prefer: "return=representation" } });
 export const deletePurchase = (token, id) => request(`purchases?id=eq.${encodeURIComponent(id)}`, { token, method: "DELETE" });
+
+/** Refresh schedule published with the site (data/schedule.json). Null if unavailable. */
+export async function loadSchedule() { try { const r = await fetch("data/schedule.json", { cache: "no-cache" }); return r.ok ? await r.json() : null; } catch { return null; } }

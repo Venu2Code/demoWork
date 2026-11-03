@@ -48,7 +48,7 @@ export function makeBackend(opts = {}) {
   for (const [m, p, k] of [["gold", 24, 1], ["gold", 22, FINE[22]], ["gold", 18, FINE[18]], ["silver", 999, 1 / 80]]) for (let h = 1; h <= 3; h++) { const mid = g24 * k * (1 + 0.002 * h); forecasts.push({ generated_on: today, metal: m, purity: p, horizon: h, low: mid * (1 - 0.01 * h), center: mid, high: mid * (1 + 0.01 * h), bias: 0.4, confidence: "medium", rationale: "Softer US data supports gold; CPI later is the main risk.", model: "test" }); }
   return {
     daily: opts.empty ? [] : daily, ticks: opts.empty ? [] : ticks, news, forecasts: opts.empty ? [] : forecasts,
-    status: [{ source: "goldapi.io", last_checked: new Date(now - (opts.staleHours ?? 0.05) * 3600e3).toISOString(), last_ok: true, note: "ok" }],
+    status: [{ source: "goldapi.io", last_checked: opts.lastChecked || new Date(now - (opts.staleHours ?? 0.05) * 3600e3).toISOString(), last_ok: true, note: "ok" }],
     purchases: [], users: new Map(), requests: [], nowIso, today,
     authMode: opts.authMode || "open",           // open | confirm | ratelimit | disabled | offline
   };

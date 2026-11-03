@@ -5,7 +5,7 @@ Today's **gold (18K / 22K / 24K) and silver rate in India**, per gram and per 10
 > Information only, not financial advice. Rates are **estimates** (international price converted to INR plus import duty). Your jeweller's rate, GST and making charges will differ. See `SECURITY.md` for how wrong data is prevented.
 
 ## How it works
-- **Live prices**: a GitHub Action calls a metals API every 15 minutes, validates the numbers, and saves a row only when the price changes.
+- **Live prices**: a GitHub Action calls a metals API four times a day (10:00, 13:00, 16:00, 19:00 IST, Monday to Saturday), validates the numbers, and saves a row only when the price differs from the last check. This is sized for GoldAPI's 300 requests/month plan (4 runs x 2 requests x 26 days = 208), and a built-in counter refuses to call the API once 250 requests are used in a month (`GOLDAPI_MONTHLY_LIMIT` to change it). If you upgrade the plan, edit the cron in `.github/workflows/live-prices.yml` AND `site/data/schedule.json` together (a test checks they match). Change times are therefore 'when we noticed', not minute-exact.
 - **History**: ~3 years of daily estimates built from open data (global price x official USD/INR x duty), or from your own CSV.
 - **News + outlook**: each morning Claude searches a fixed list of trusted sites for overnight and upcoming events. Code checks every item. The 3-day range is computed from real price swings; the AI can only nudge it slightly.
 - **Your gold**: sign in, record each purchase (date, grams, total paid incl. GST/charges). Each row is locked to your account by Postgres Row Level Security.

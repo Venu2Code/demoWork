@@ -45,11 +45,34 @@ export function validateTicks(ticks, last = [], { maxJumpPct = 8 } = {}) {
   return { ok: problems.length === 0, problems };
 }
 
-/** True when the latest observation is too old to call "current". Indian bullion trades Mon-Sat; allow weekends. */
-export function staleness(lastCheckedIso, now = new Date()) {
+const IST_MS = 330 * 60000;
+const istMidnight = (ms) => Math.floor((ms + IST_MS) / 864e5) * 864e5 - IST_MS;
+const slotsOn = (dayStartMs, schedule) => (schedule.days.includes(new Date(dayStartMs + IST_MS).getUTCDay()) ? schedule.times.map((t) => { const [h, m] = t.split(":").map(Number); return dayStartMs + (h * 60 + m) * 60000; }).sort((a, b) => a - b) : []);
+
+/** Most recent scheduled refresh at or before `now` (epoch ms), or null. Schedule = { days, times (IST HH:MM), graceMinutes }. */
+export function lastScheduledRun(now, schedule) {
+  const t = new Date(now).getTime(), today = istMidnight(t);
+  for (let back = 0; back <= 8; back++) { const hit = slotsOn(today - back * 864e5, schedule).filter((x) => x <= t); if (hit.length) return hit.at(-1); }
+  return null;
+}
+/** Next scheduled refresh after `now` (epoch ms), or null. */
+export function nextScheduledRun(now, schedule) {
+  const t = new Date(now).getTime(), today = istMidnight(t);
+  for (let ahead = 0; ahead <= 8; ahead++) { const hit = slotsOn(today + ahead * 864e5, schedule).filter((x) => x > t); if (hit.length) return hit[0]; }
+  return null;
+}
+
+/**
+ * Is the displayed price too old to call "current"?
+ * With a schedule: stale only if a scheduled refresh was MISSED (so nights, Sundays and the gap between runs are not warned about).
+ * Without one: older than 3 hours.
+ */
+export function staleness(lastCheckedIso, now = new Date(), schedule = null) {
   if (!lastCheckedIso) return { stale: true, hours: Infinity };
-  const hours = (now - new Date(lastCheckedIso)) / 36e5;
-  return { stale: hours > 3, hours };
+  const last = Date.parse(lastCheckedIso), t = new Date(now).getTime(), hours = (t - last) / 36e5;
+  if (!schedule) return { stale: hours > 3, hours };
+  const due = lastScheduledRun(t, schedule);
+  return { stale: due != null && last < due - 10 * 60000 && t - due > schedule.graceMinutes * 60000, hours };
 }
 
 /** IST calendar day (YYYY-MM-DD) for a Date/ISO string. */

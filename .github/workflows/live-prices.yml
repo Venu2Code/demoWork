@@ -1,8 +1,10 @@
 name: Live prices
 # Records a price row only when the rate changes. GitHub may delay scheduled runs by a few minutes.
+# Sized for GoldAPI's 300 requests/month: 4 runs/day x 2 requests x 26 days = 208.
+# Times are UTC = 10:00, 13:00, 16:00, 19:00 IST, Monday-Saturday. Keep in sync with site/data/schedule.json (a test checks).
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "30 4,7,10,13 * * 1-6"
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,6 +23,7 @@ jobs:
       - name: Fetch, validate and store prices
         env:
           GOLDAPI_KEY: ${{ secrets.GOLDAPI_KEY }}
+          GOLDAPI_MONTHLY_LIMIT: ${{ vars.GOLDAPI_MONTHLY_LIMIT }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: node scripts/fetch-live.mjs

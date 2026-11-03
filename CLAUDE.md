@@ -13,7 +13,7 @@ Accurate, honestly-labelled Indian gold/silver information + a private savings t
 
 ## Architecture
 - `site/`: static SPA on GitHub Pages (vanilla ES modules, no build). `js/lib/*` = PURE logic shared with scripts and tests: `pricing.js` (conversion + data-quality rules), `analytics.js` (forecast range, buy meter, sell meter), `portfolio.js` (lot P/L + form validation), `format.js` (IST/INR). `js/views/*` pages, `api.js` Supabase REST, `auth.js` login, `chart.js` SVG chart.
-- `scripts/`: `fetch-live.mjs` (every 15 min; writes a tick ONLY on change), `backfill-history.mjs` + `import-csv.mjs` (3-year history), `update-outlook.mjs` (Claude news search + forecast), `lib/*`.
+- `scripts/`: `fetch-live.mjs` (scheduled per `site/data/schedule.json`, 4x/day Mon-Sat to fit GoldAPI's 300 requests/month; request counter in `lib/quota.mjs`; writes a tick ONLY on change), `backfill-history.mjs` + `import-csv.mjs` (3-year history), `update-outlook.mjs` (Claude news search + forecast), `lib/*`.
 - `supabase/schema.sql`: public read-only tables (`price_ticks`, `daily_prices`, `ingest_status`, `news_items`, `forecasts`) + private `purchases` (Row Level Security: owner only; anon has no access).
 - `config/pricing.json`: import duty / premium used to turn international spot into an ESTIMATED Indian rate (verify against current rules).
 - `site/data/allowed-domains.json`: trusted domains (`news` for Claude search, `data` for providers). Hooks, validators and the browser all read it.

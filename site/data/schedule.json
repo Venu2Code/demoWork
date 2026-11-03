@@ -1,0 +1,6 @@
+{
+  "_comment": "When live prices are refreshed (India time). MUST match the cron in .github/workflows/live-prices.yml (a test enforces this). Sized for GoldAPI's 300 requests/month: 4 runs x 2 requests x 26 days = 208. days: 0=Sun..6=Sat.",
+  "days": [1, 2, 3, 4, 5, 6],
+  "times": ["10:00", "13:00", "16:00", "19:00"],
+  "graceMinutes": 90
+}
