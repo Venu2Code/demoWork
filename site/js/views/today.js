@@ -17,14 +17,14 @@ function newsList(items, none) {
 }
 
 function marketWatch(o) {
-  const over = o.news.filter((n) => n.kind === "overnight"), startOfToday = new Date(`${o.today}T00:00:00+05:30`).toISOString();
+  const over = o.news.filter((n) => n.kind === "overnight" && n.for_date === o.today), startOfToday = new Date(`${o.today}T00:00:00+05:30`).toISOString();
   const up = o.news.filter((n) => n.kind === "upcoming" && n.event_time && n.event_time >= startOfToday);
   return card("watch",
     h("div", { class: "head" }, h("h2", {}, "Market watch"), h("small", {}, "News that can move today's rate · times in IST")),
     h("div", { class: "cols" },
       h("div", {}, h("h3", {}, "Happened overnight"), newsList(over, "No verified overnight events recorded.")),
       h("div", {}, h("h3", {}, "Coming up (today & tomorrow)"), newsList(up, "No scheduled market-moving events recorded."))),
-    h("p", { class: "fine" }, "Curated by Claude from a fixed list of trusted sources and checked by code before display. Event times can change; confirm with the source."));
+    h("p", { class: "fine" }, "Headlines come from a fixed list of official and trusted sources and are checked by code before display. \"Unclear impact\" means nobody has judged how the item affects gold. Event times can change; confirm with the source."));
 }
 
 function priceCards(d) {
@@ -67,7 +67,7 @@ function forecastCard(o) {
     if (!rows.length) { body.replaceChildren(h("p", { class: "muted" }, "No forecast for this item yet.")); return; }
     const b = Number(rows[0].bias), lean = b > 0.1 ? ["Leaning higher", "up"] : b < -0.1 ? ["Leaning lower", "down"] : ["No clear lean", "flat"];
     body.replaceChildren(
-      h("div", { class: "row" }, chip(lean[0], lean[1]), chip(`Confidence: ${rows[0].confidence}`), rows[0].model === "statistical" ? chip("Statistical only (no verified news)") : null),
+      h("div", { class: "row" }, chip(lean[0], lean[1]), chip(`Confidence: ${rows[0].confidence}`), rows[0].model === "statistical" ? chip("Based on price swings only") : null),
       h("div", { class: "scroll" }, h("table", {}, h("thead", {}, h("tr", {}, ["Day", "Likely range (80%)", "Middle"].map((x) => h("th", { scope: "col" }, x)))),
         h("tbody", {}, rows.map((r) => {
           const day = new Date(new Date(`${o.today}T12:00:00+05:30`).getTime() + r.horizon * 864e5);

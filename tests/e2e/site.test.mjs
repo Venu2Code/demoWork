@@ -28,6 +28,10 @@ test("Today: prices, change log, news, forecast and meters render with data", as
   assert.match(await page.locator(".forecast").innerText(), /not financial advice/i);
   assert.equal(await page.locator(".meterc .meter").count(), 1);
   assert.match(await page.locator(".watch").innerText(), /Happened overnight/);
+  assert.ok(!(await page.locator(".watch").innerText()).includes("Yesterday headline"), "only today's overnight items are shown");
+  assert.match(await page.locator(".watch").innerText(), /Unclear impact|Pushes gold up/);
+  assert.match(await page.locator(".watch .fine").innerText(), /official and trusted sources/);
+  assert.ok(!/claude/i.test(await page.locator(".watch").innerText()), "no claim that Claude wrote the news");
   assert.match(await page.locator(".notice").first().innerText(), /estimated Indian rates|out of date/);
   await noJunk(page); assert.deepEqual(errs, []); await ctx.close();
 });
@@ -213,4 +217,12 @@ test("Silver can be switched back on from schedule.json (the code path stays ali
   await page.goto(`${server.url}/#/charts`); await page.waitForSelector(".chart-svg");
   assert.equal(await page.locator('.seg button:has-text("Silver")').count(), 1);
   assert.deepEqual(errs, []); await ctx.close();
+});
+
+test("Forecast built from price swings only is labelled as such and says news does not move it", async () => {
+  const { page, ctx } = await open({ statistical: true });
+  await page.waitForSelector(".forecast tbody tr");
+  assert.match(await page.locator(".forecast").innerText(), /Based on price swings only/);
+  assert.match(await page.locator(".forecast").innerText(), /not a promise/i);
+  await ctx.close();
 });
