@@ -16,8 +16,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - name: Claude news search (allowlisted sites only) + forecast ranges
+      - name: News headlines + release calendar (free feeds, no AI by default) and 3-day forecast ranges
         env:
+          # NEWS_MODE is empty by default = free feeds. Set the repository variable NEWS_MODE=claude to use Claude (needs API credits).
+          NEWS_MODE: ${{ vars.NEWS_MODE }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

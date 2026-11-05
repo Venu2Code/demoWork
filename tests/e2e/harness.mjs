@@ -38,14 +38,15 @@ export function makeBackend(opts = {}) {
   }
   if (!ticks.length) for (const p of [24, 22, 18]) ticks.push({ metal: "gold", purity: p, price_per_gram: +(g24 * FINE[p]).toFixed(2), observed_at: new Date(now - 300000).toISOString() });
   if (!ticks.some((t) => t.metal === "silver")) ticks.push({ metal: "silver", purity: 999, price_per_gram: +(g24 / 80).toFixed(2), observed_at: new Date(now - 300000).toISOString() });
-  const today = istDay(now), tomorrow = istDay(now + 864e5);
+  const today = istDay(now), tomorrow = istDay(now + 864e5), yesterday = istDay(now - 864e5);
   const news = [
     { id: "n1", kind: "overnight", title: "US jobs data came in weaker than expected", summary: "Softer hiring numbers raised hopes of rate cuts, which usually supports gold.", url: "https://www.reuters.com/markets/", source: "reuters.com", impact: "bullish", event_time: null, for_date: today },
     { id: "n2", kind: "upcoming", title: "US CPI inflation release", summary: "A hotter reading can lift the dollar and weigh on gold; a cooler one helps it.", url: "https://www.bls.gov/cpi/", source: "bls.gov", impact: "uncertain", event_time: `${today}T20:00:00+05:30`, for_date: today },
     { id: "n3", kind: "upcoming", title: "Item from an untrusted domain", summary: "This points at a domain that is not allowlisted so it must render as plain text.", url: "https://evil.example/x", source: "evil.example", impact: "neutral", event_time: `${tomorrow}T10:00:00+05:30`, for_date: today },
+    { id: "n4", kind: "overnight", title: "Yesterday headline that must be hidden today", summary: "Left over from the previous day because today's job found nothing.", url: "https://www.reuters.com/markets/old", source: "reuters.com", impact: "uncertain", event_time: null, for_date: yesterday },
   ];
   const forecasts = [];
-  for (const [m, p, k] of [["gold", 24, 1], ["gold", 22, FINE[22]], ["gold", 18, FINE[18]], ["silver", 999, 1 / 80]]) for (let h = 1; h <= 3; h++) { const mid = g24 * k * (1 + 0.002 * h); forecasts.push({ generated_on: today, metal: m, purity: p, horizon: h, low: mid * (1 - 0.01 * h), center: mid, high: mid * (1 + 0.01 * h), bias: 0.4, confidence: "medium", rationale: "Softer US data supports gold; CPI later is the main risk.", model: "test" }); }
+  for (const [m, p, k] of [["gold", 24, 1], ["gold", 22, FINE[22]], ["gold", 18, FINE[18]], ["silver", 999, 1 / 80]]) for (let h = 1; h <= 3; h++) { const mid = g24 * k * (1 + 0.002 * h); forecasts.push({ generated_on: today, metal: m, purity: p, horizon: h, low: mid * (1 - 0.01 * h), center: mid, high: mid * (1 + 0.01 * h), bias: 0.4, confidence: "medium", rationale: "Softer US data supports gold; CPI later is the main risk.", model: opts.statistical ? "statistical" : "test" }); }
   return {
     daily: opts.empty ? [] : daily, ticks: opts.empty ? [] : ticks, news, forecasts: opts.empty ? [] : forecasts,
     status: [{ source: "goldapi.io", last_checked: opts.lastChecked || new Date(now - (opts.staleHours ?? 0.05) * 3600e3).toISOString(), last_ok: true, note: "ok" }],

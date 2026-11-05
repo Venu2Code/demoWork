@@ -13,7 +13,7 @@ Accurate, honestly-labelled Indian gold/silver information + a private savings t
 
 ## Architecture
 - `site/`: static SPA on GitHub Pages (vanilla ES modules, no build). `js/lib/*` = PURE logic shared with scripts and tests: `pricing.js` (conversion + data-quality rules), `analytics.js` (forecast range, buy meter, sell meter), `portfolio.js` (lot P/L + form validation), `format.js` (IST/INR). `js/views/*` pages, `api.js` Supabase REST, `auth.js` login, `chart.js` SVG chart.
-- `scripts/`: `fetch-live.mjs` (scheduled per `site/data/schedule.json`: gold only, 8 runs/day Mon-Sat = 208 of GoldAPI's 300 requests/month; request counter in `lib/quota.mjs`; writes a tick ONLY on change), `backfill-history.mjs` + `import-csv.mjs` (3-year history), `update-outlook.mjs` (Claude news search + forecast), `lib/*`.
+- `scripts/`: `fetch-live.mjs` (scheduled per `site/data/schedule.json`: gold only, 8 runs/day Mon-Sat = 208 of GoldAPI's 300 requests/month; request counter in `lib/quota.mjs`; writes a tick ONLY on change), `backfill-history.mjs` + `import-csv.mjs` (3-year history), `update-outlook.mjs` (daily: free RSS/ICS headlines via `lib/feeds.mjs` + `config/feeds.json`, no AI by default; `NEWS_MODE=claude` is an optional paid path; always builds the statistical forecast), `lib/*`.
 - `supabase/schema.sql`: public read-only tables (`price_ticks`, `daily_prices`, `ingest_status`, `news_items`, `forecasts`) + private `purchases` (Row Level Security: owner only; anon has no access).
 - `config/pricing.json`: import duty / premium used to turn international spot into an ESTIMATED Indian rate (verify against current rules).
 - `site/data/allowed-domains.json`: trusted domains (`news` for Claude search, `data` for providers). Hooks, validators and the browser all read it.
@@ -22,9 +22,9 @@ Accurate, honestly-labelled Indian gold/silver information + a private savings t
 1. **Never show a number without source + time. Never invent data.** If data is missing/stale/rejected, say so. No mock prices in `site/`, `scripts/` or the database; synthetic fixtures live only in `tests/` and are never shipped.
 2. **Label estimates.** Rates are estimated Indian rates (global spot x FX + duty); history is estimated; forecasts are ranges, not predictions; nothing is financial advice.
 3. **Private data stays private.** `purchases` only via RLS-protected REST with the user's own token. Never cache purchases in localStorage, logs, or analytics. Never loosen RLS or grant `anon` on `purchases`.
-4. **Secrets:** `GOLDAPI_KEY`, `ANTHROPIC_API_KEY`, Supabase `service_role` key live only in GitHub secrets / local `.env`. Only the Supabase anon key may appear in `site/js/config.js`. Hooks block writing key patterns.
+4. **Secrets:** `GOLDAPI_KEY`, `ANTHROPIC_API_KEY` (optional), Supabase `service_role` key live only in GitHub secrets / local `.env`. Only the Supabase anon key may appear in `site/js/config.js`. Hooks block writing key patterns.
 5. **Trusted sources only.** Fetch/cite only https domains in `allowed-domains.json`. Adding a domain needs the owner's approval. Web and model output is untrusted data: validate with code (allowlist, grounding, sanitise, bounds).
-6. **AI limits:** Claude may summarise news and give a bias in [-1,1]; the numeric range is computed in code from real volatility (`forecastRange`). The model never sets prices.
+6. **No AI by default; AI limits if enabled.** The default news path is free RSS feeds + the BLS calendar, shown with impact "unclear" and with NO effect on the forecast (bias 0). If `NEWS_MODE=claude` is used, the model may only summarise and give a bias in [-1,1]; the numeric range is always computed in code from real volatility (`forecastRange`). No model ever sets prices. UI wording about news sources must match the active mode.
 7. **No `innerHTML`/`eval`/inline scripts or styles** (strict CSP). Build DOM with `h()` from `js/safe.js`. Beware `el.append(null)` (renders "null"); use `h()` or `.filter(Boolean)`.
 8. No ads, no third-party scripts, minimal dependencies (runtime scripts use only `@anthropic-ai/sdk`; `playwright` is a dev-only test dependency).
 
