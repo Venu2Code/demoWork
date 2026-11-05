@@ -12,4 +12,4 @@ createServer(async (req, res) => {
   if (!file.startsWith(site)) { res.writeHead(403).end(); return; }
   try { res.writeHead(200, { "Content-Type": types[path.extname(file)] ?? "application/octet-stream" }).end(await readFile(file)); }
   catch { res.writeHead(404).end("Not found"); }
-}).listen(process.env.PORT || 8080, () => console.log(`Gold Tracker India on http://localhost:${process.env.PORT || 8080}`));
+}).listen(process.env.PORT || 8080, "127.0.0.1", () => console.log(`Gold Tracker India on http://localhost:${process.env.PORT || 8080}`));

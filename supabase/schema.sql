@@ -117,7 +117,12 @@ declare t text;
 begin
   foreach t in array array['price_ticks','daily_prices','ingest_status','news_items','forecasts'] loop
     execute format('drop policy if exists "public read" on public.%I', t);
-    execute format('create policy "public read" on public.%I for select to anon, authenticated using (true)', t);
+    if t = 'ingest_status' then
+      -- Hide the internal monthly request counter ("...:usage" rows). Everything else in this table is public heartbeat data.
+      execute 'create policy "public read" on public.ingest_status for select to anon, authenticated using (source not like ''%:usage'')';
+    else
+      execute format('create policy "public read" on public.%I for select to anon, authenticated using (true)', t);
+    end if;
     -- Deliberately NO insert/update/delete policy: only the service_role key (GitHub Actions) can write.
   end loop;
 end $$;
@@ -134,4 +139,17 @@ create policy "owner delete" on public.purchases for delete to authenticated usi
 
 -- Belt and braces: remove table privileges the API roles should never have.
 revoke all on public.purchases from anon;
+-- A signed-in user may only read/insert/update/delete their own rows (RLS above). Nothing else is ever needed:
+revoke truncate, references, trigger on public.purchases from authenticated;
+
+-- Abuse protection: one account cannot fill the free database with millions of rows.
+create or replace function public.limit_purchases_per_user() returns trigger language plpgsql as $$
+begin
+  if (select count(*) from public.purchases where user_id = new.user_id) >= 5000 then
+    raise exception 'purchase limit reached (5000 per account)';
+  end if;
+  return new;
+end $$;
+drop trigger if exists purchases_limit on public.purchases;
+create trigger purchases_limit before insert on public.purchases for each row execute function public.limit_purchases_per_user();
 revoke insert, update, delete, truncate on public.price_ticks, public.daily_prices, public.ingest_status, public.news_items, public.forecasts from anon, authenticated;

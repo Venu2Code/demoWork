@@ -138,7 +138,7 @@ sequenceDiagram
 
   U->>W: sign in
   W->>A: email and password
-  A-->>W: login token (kept in the browser, wiped after 30 minutes idle)
+  A-->>W: login token (kept in the browser, ends after 30 minutes idle even if the tab was closed)
   U->>W: add a purchase (date, grams, total paid)
   W->>W: validate the form (js/lib/portfolio.js)
   W->>D: save, sending the user's token
@@ -147,7 +147,7 @@ sequenceDiagram
   W->>W: profit or loss versus today's rate, +50% sell signal
 ```
 
-Purchases are **never** stored in the browser (only the login token is), and never logged.
+Purchases are **never** stored in the browser (only the login token is), and never logged. Signing out (or 30 minutes of inactivity, also checked when the site is reopened) clears the token **and** revokes the session on the server.
 
 ---
 
@@ -186,7 +186,7 @@ Purchases are **never** stored in the browser (only the login token is), and nev
 |---|---|---|---|---|
 | `price_ticks` | One row each time a check saw a **different** price (metal, purity, price per gram, raw price, duty applied, source, provider time) | Live prices job | Today page, change log | yes (read only) |
 | `daily_prices` | One row per day per purity: open, high, low, close. History rows are estimates (`is_estimate`) | Backfill job, Live prices job (today's row) | Charts, previous close, buy meter, forecast | yes (read only) |
-| `ingest_status` | Heartbeat: when each source was last checked, success or not, plus the monthly request counter row | Live prices job | "last checked" and "out of date" logic | yes (read only) |
+| `ingest_status` | Heartbeat: when each source was last checked, success or not. (A second internal row counts GoldAPI requests; the public read policy hides it) | Live prices job | "last checked" and "out of date" logic | yes (read only) |
 | `news_items` | Headlines and scheduled events for a day | Daily news job | Market watch box | yes (read only) |
 | `forecasts` | 3-day low / middle / high per purity | Daily news job | Forecast table | yes (read only) |
 | `purchases` | A user's purchases (date, metal, purity, grams, total paid, GST, charges) | The signed-in user (website) | The same user only | **no, private** |
@@ -237,6 +237,7 @@ Only two values are public and live in `site/js/config.js`: the Supabase URL and
 5. No `innerHTML`, `eval` or inline scripts. Build the page with `h()` from `site/js/safe.js` (strict security policy).
 6. Secrets only in GitHub secrets, never in the repo.
 7. No ads, no trackers, no third-party scripts.
+8. Keep the security tests green (`tests/security.test.mjs`): they fail if someone adds an HTML-injection sink, loosens the page policy, weakens a database rule, adds secrets, or gives a workflow more access than it needs. Details and owner to-dos: `SECURITY.md`.
 
 ---
 

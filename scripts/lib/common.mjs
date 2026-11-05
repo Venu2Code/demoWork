@@ -22,16 +22,39 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /** Hide API keys/tokens that appear in URLs before text reaches logs or error messages. */
 export const redact = (text) => String(text).replace(/([?&](?:apikey|api_key|key|token|access_token)=)[^&\s]+/gi, "$1***");
 
-/** fetch with timeout + one retry on 5xx/network errors; only allowlisted hosts. */
-export async function safeFetch(url, opts = {}, list = loadAllowlist()) {
-  if (!isAllowedUrl(url, list)) throw new Error(`refusing to fetch non-allowlisted URL: ${redact(url)}`);
-  let lastErr;
-  for (let i = 0; i < 2; i++) {
-    try {
-      const res = await fetch(url, { ...opts, signal: AbortSignal.timeout(25000) });
-      if (res.status >= 500) throw new Error(`HTTP ${res.status}`);
-      return res;
-    } catch (e) { lastErr = e; await sleep(1500); }
+/**
+ * fetch with timeout + one retry on 5xx/network errors; only allowlisted hosts.
+ * Redirects are followed by hand (max 3) and EVERY hop must be on the allowlist, so a trusted host can never
+ * bounce a job to an untrusted one. Options: { retryDelayMs } (tests use 0).
+ */
+export async function safeFetch(url, opts = {}, list = loadAllowlist(), { maxRedirects = 3, retryDelayMs = 1500 } = {}) {
+  let current = url;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    if (!isAllowedUrl(current, list)) throw new Error(`refusing to fetch non-allowlisted URL: ${redact(current)}`);
+    let res, lastErr;
+    for (let i = 0; i < 2 && !res; i++) {
+      try {
+        res = await fetch(current, { ...opts, redirect: "manual", signal: AbortSignal.timeout(25000) });
+        if (res.status >= 500) { const s = res.status; res = undefined; throw new Error(`HTTP ${s}`); }
+      } catch (e) { lastErr = e; if (retryDelayMs) await sleep(retryDelayMs); }
+    }
+    if (!res) throw new Error(redact(lastErr?.message || lastErr));   // network errors can embed the URL, so never rethrow them raw
+    const where = res.status >= 300 && res.status < 400 ? res.headers.get("location") : null;
+    if (!where) return res;
+    try { current = new URL(where, current).href; } catch { throw new Error("redirect to an invalid address"); }
   }
-  throw new Error(redact(lastErr?.message || lastErr));   // network errors can embed the URL, so never rethrow them raw
+  throw new Error("too many redirects");
+}
+
+/** Read a response body as text, refusing anything larger than `max` bytes (protects job memory from huge or hostile responses). */
+export async function readLimited(res, max = 3_000_000) {
+  const declared = Number(res.headers.get("content-length"));
+  if (declared > max) throw new Error("response too large");
+  const reader = res.body.getReader(), chunks = []; let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read(); if (done) break;
+    n += value.length; if (n > max) { await reader.cancel(); throw new Error("response too large"); }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
 }

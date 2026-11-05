@@ -39,6 +39,11 @@ GitHub fix already applied: Settings > Environments > github-pages > deployment 
 - FINDING: GitHub's free scheduler is unreliable for this repo: only 5 scheduled Live prices runs in ~28 h (expected ~10), several hours late (e.g. runs at 20:20-20:53 UTC for 14:30 UTC slots), and the daily news job ran ~6 h late. Prices still update, but not at the planned times. DECISION (owner): accept it and loosen the warning. New rule: 'out of date' only if a slot older than `graceMinutes` (360) was never covered by a successful check. 'Next update' text now says 'expected around ... (can run late)'; About page says planned times can slip. Better fix if needed later: an external timer (cron-job.org) calling `workflow_dispatch` with a repo-limited token.
 - Tests: 58 unit + 22 browser pass.
 
+## Security review (2026-11-05)
+- Full audit done; 9 weaknesses fixed with tests (see `SECURITY.md`): idle logout across reloads, server-side logout, redirect checks + size caps in the job fetcher, narrowed CSP `connect-src`, clickjacking guard, runtime-only installs for jobs with secrets (+ lazy AI library), database hardening, loopback dev server, Dependabot.
+- OWNER MUST: re-run `supabase/schema.sql` (whole file, select all) so the database hardening applies; set Supabase password minimum to 12, CAPTCHA, Site URL; protect `main` on GitHub; 2FA everywhere.
+- Tests: 80 unit (incl. 8 security regression) + 25 browser.
+
 ## NEXT (in order; always run workflows from branch `main`)
 0. Owner: set default branch to `main`, then run workflows 1-3 below (they will now appear in the Actions list).
 1. Actions > **Backfill 3-year history**: loads `daily_prices`. Not yet run or result unknown. If red, get the error text, fix (likely sources Stooq/Frankfurter format or reachability; fallback `scripts/import-csv.mjs`).

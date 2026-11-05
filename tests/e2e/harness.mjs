@@ -57,11 +57,19 @@ export function makeBackend(opts = {}) {
 
 /** Wire a page to the fake backend. Returns the backend so tests can inspect `requests` and `purchases`. */
 export async function wire(page, siteUrl, backend) {
+  // The real page only allows connections to the project's own Supabase host. For tests, point that one host at the fake backend
+  // (so the narrowed policy is exercised, not bypassed).
+  const origin = new URL(siteUrl).origin;
+  await page.route((u) => u.origin === origin && (u.pathname === "/" || u.pathname === "/index.html"), async (route) => {
+    const res = await route.fetch(), body = (await res.text()).replace(/https:\/\/[a-z0-9-]+\.supabase\.co/g, FAKE);
+    await route.fulfill({ response: res, body, headers: { ...res.headers(), "content-length": String(Buffer.byteLength(body)) } });
+  });
   await page.route("**/js/config.js", (r) => r.fulfill({ contentType: "text/javascript", body: `export const SUPABASE_URL="${FAKE}";export const SUPABASE_ANON_KEY="sb_publishable_test";` }));
   await page.route(`${FAKE}/**`, async (r) => {
     const req = r.request(), u = new URL(req.url()), m = req.method(), hdr = req.headers(), json = (o, s = 200) => r.fulfill({ status: s, contentType: "application/json", body: JSON.stringify(o) });
     backend.requests.push({ method: m, path: u.pathname, auth: hdr.authorization || null });
     if (backend.authMode === "offline" && u.pathname.startsWith("/auth/")) return r.abort();
+    if (u.pathname.endsWith("/auth/v1/logout")) return r.fulfill({ status: 204, body: "" });
     if (u.pathname.startsWith("/auth/v1/")) {
       const body = req.postData() ? JSON.parse(req.postData()) : {};
       const sess = (email) => ({ access_token: "tok-" + email, refresh_token: "r", expires_in: 3600, user: { id: "id-" + email, email } });

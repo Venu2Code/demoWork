@@ -7,7 +7,7 @@
 // with --allow-partial the metal that passes is saved and the other is reported (as a warning) and skipped.
 // If the source is unavailable, use scripts/import-csv.mjs with your own file instead.
 //   node scripts/backfill-history.mjs [--dry-run] [--allow-partial]
-import { loadPricing, safeFetch } from "./lib/common.mjs";
+import { loadPricing, safeFetch, readLimited } from "./lib/common.mjs";
 import { db } from "./lib/db.mjs";
 import { parseFx, buildDaily, coverage, loadUsdHistory, httpErrorMessage } from "./lib/history.mjs";
 
@@ -17,7 +17,7 @@ const PARTIAL = process.argv.includes("--allow-partial");
 const ymd = (d) => d.toISOString().slice(0, 10);
 
 // Never put the URL in the message: it can contain an API key.
-async function text(url, headers = {}) { const r = await safeFetch(url, { headers }); if (!r.ok) throw new Error(httpErrorMessage(r.status, await r.text())); return r.text(); }
+async function text(url, headers = {}) { const r = await safeFetch(url, { headers }); if (!r.ok) throw new Error(httpErrorMessage(r.status, await readLimited(r, 200_000))); return readLimited(r, 5_000_000); }
 
 async function main() {
   const pricing = loadPricing(), end = new Date(), start = new Date(end - pricing.history_days * 864e5);
