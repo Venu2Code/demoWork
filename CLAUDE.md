@@ -1,6 +1,6 @@
 # Gold Tracker India: project memory for Claude
 
-A public website showing today's gold (18K/22K/24K) rate in India per gram and per 10 g (silver is built but switched OFF for now: `metals` in `site/data/schedule.json`), every price change of the day with its IST time, 3 years of history charts, market-moving news (overnight + today/tomorrow), a labelled 3-day outlook, buy/sell meters, and a PRIVATE purchase tracker (profit/loss, sell signal at +50%). Read `docs/PROGRESS.md` first; update it after meaningful work.
+A public website showing today's gold (18K/22K/24K) rate in India per gram and per 10 g (silver is built but switched OFF for now: `metals` in `site/data/schedule.json`), every price change of the day with its IST time, 3 years of history charts, market-moving news (overnight + today/tomorrow), a labelled 3-day outlook, buy/sell meters, and a PRIVATE purchase tracker (profit/loss, sell signal at +50%). Read `docs/PROGRESS.md` first; update it after meaningful work. `docs/ARCHITECTURE.md` explains the data flow, folders and recipes: keep it in sync when you change structure, schedules, tables or secrets.
 
 ## Core idea (do not drift; new features must fit it)
 Accurate, honestly-labelled Indian gold/silver information + a private savings tracker. No ads, no trackers, no third-party scripts.
