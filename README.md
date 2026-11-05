@@ -22,6 +22,8 @@ Today's **gold (18K / 22K / 24K) rate in India**, per gram and per 10 g, with ev
 
 If the history source is unreachable or too short, the job stops without writing anything. Use your own file instead: `node scripts/import-csv.mjs file.csv gold usd-oz` (see header comment for formats).
 
+> **New here? Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**: diagrams of how the data flows, what each folder is for, and recipes for common changes.
+
 ## Local development
 ```bash
 npm install
