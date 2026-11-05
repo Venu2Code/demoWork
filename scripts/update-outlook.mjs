@@ -7,10 +7,9 @@
 // All news goes through the same validation (trusted https domains, cleaned text, dates). If the news step fails the
 // statistical forecast is still published and the run exits red so the problem is noticed.
 //   node scripts/update-outlook.mjs [--dry-run] [--mock file.json]
-import Anthropic from "@anthropic-ai/sdk";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { loadAllowlist, loadSchedule, safeFetch, ROOT } from "./lib/common.mjs";
+import { loadAllowlist, loadSchedule, safeFetch, readLimited, ROOT } from "./lib/common.mjs";
 import { collectFeedNews } from "./lib/feeds.mjs";
 import { db } from "./lib/db.mjs";
 import { extractJson, validateNews, validateOutlook } from "./lib/outlook.mjs";
@@ -26,7 +25,7 @@ const UA = "GoldTrackerIndia-newsbot/1.0 (+https://venu2code.github.io/demoWork/
 async function fetchFeedText(url) {
   const r = await safeFetch(url, { headers: { "User-Agent": UA, Accept: "application/rss+xml, application/atom+xml, text/calendar, text/xml, */*" } });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return (await r.text()).slice(0, 3_000_000);
+  return readLimited(r, 3_000_000);
 }
 const TARGETS = [["gold", 24], ["gold", 22], ["gold", 18], ["silver", 999]].filter(([m]) => loadSchedule().metals.includes(m));
 
@@ -47,6 +46,8 @@ Return ONLY JSON, no prose, no fences:
 Give at most 6 overnight and 6 upcoming items.`;
 
 async function askClaude(list, context, today) {
+  // Loaded only in the optional paid mode, so in the default (free) mode no third-party AI code runs next to the database secret key.
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic();
   const messages = [{ role: "user", content: `Today (India) is ${today}. Market context: ${context}\nProduce the JSON.` }];
   const tools = [{ type: "web_search_20260209", name: "web_search", max_uses: 8, allowed_domains: list.news }];

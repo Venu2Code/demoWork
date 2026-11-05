@@ -173,6 +173,7 @@ test("My Gold: full journey. sign up, add purchases, see profit/loss and +50% al
   // delete and sign out
   page.once("dialog", (d) => d.accept()); await page.click("text=Delete"); await page.waitForSelector("text=No purchases yet");
   await page.click("text=Sign out"); await page.waitForSelector(".auth");
+  assert.ok(backend.requests.some((r) => r.path.endsWith("/auth/v1/logout") && r.auth?.startsWith("Bearer tok-")), "sign-out revoked the session on the server");
   const stored = await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }));
   assert.ok(!stored.includes("total_paid") && !stored.includes("grams"), "purchase data must never be stored in the browser");
   assert.ok(!stored.includes("tok-me@example.com"), "session token removed on sign-out");
@@ -226,5 +227,38 @@ test("Forecast built from price swings only is labelled as such and says news do
   await page.waitForSelector(".forecast tbody tr");
   assert.match(await page.locator(".forecast").innerText(), /Based on price swings only/);
   assert.match(await page.locator(".forecast").innerText(), /not a promise/i);
+  await ctx.close();
+});
+
+test("Security: the page can only talk to its own backend host, never a wildcard", async () => {
+  const html = await (await fetch(`${server.url}/`)).text();
+  const csp = html.match(/Content-Security-Policy" content="([^"]+)"/)[1], connect = csp.match(/connect-src ([^;]+)/)[1];
+  assert.ok(!/\*/.test(connect) && !/unsafe-/.test(csp), `connect-src is too broad: ${connect}`);
+  const cfg = await (await fetch(`${server.url}/js/config.js`)).text(), host = new URL(cfg.match(/SUPABASE_URL = "([^"]+)"/)[1]).host;
+  assert.ok(connect.split(" ").includes(`https://${host}`), "connect-src must name exactly the configured Supabase host");
+});
+
+test("Security: clickjacking. The site hides itself when another page frames it", async () => {
+  const ctx = await browser.newContext(), page = await ctx.newPage();
+  await page.setContent(`<iframe id="f" src="${server.url}/" width="900" height="600"></iframe>`);
+  const frame = await (await page.waitForSelector("#f")).contentFrame();
+  await frame.waitForLoadState("load");
+  const hidden = await frame.evaluate(() => document.documentElement.style.display).catch(() => "navigated away");
+  assert.ok(hidden === "none" || hidden === "navigated away" || page.url().startsWith(server.url), `framed page stayed visible (display=${hidden})`);
+  await ctx.close();
+});
+
+test("Security: reopening after 45 minutes idle shows the login, not the user's purchases, and revokes the old session", async () => {
+  const { page, backend, ctx } = await open({}, "my-gold");
+  await page.waitForSelector(".auth");
+  await page.fill("input[type=email]", "me@example.com"); await page.fill("input[type=password]", "correct horse battery");
+  await page.click('button:has-text("Create account")'); await page.waitForSelector(".addform");
+  await page.evaluate(() => { const s = JSON.parse(localStorage.getItem("gt.session.v1")); s.lastActive -= 45 * 60 * 1000; localStorage.setItem("gt.session.v1", JSON.stringify(s)); });
+  backend.requests.length = 0;
+  await page.reload(); await page.waitForSelector(".auth");
+  assert.equal(await page.locator(".addform").count(), 0);
+  assert.ok(await page.evaluate(() => localStorage.getItem("gt.session.v1") === null), "stale session removed");
+  assert.ok(backend.requests.some((r) => r.path.endsWith("/auth/v1/logout")), "old session revoked on the server");
+  assert.ok(!backend.requests.some((r) => r.path.includes("/purchases")), "no purchases requested with the stale token");
   await ctx.close();
 });

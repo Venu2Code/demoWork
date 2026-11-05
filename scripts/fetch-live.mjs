@@ -3,7 +3,7 @@
 // so price_ticks is the exact log of "what changed, and when". Never writes data that fails validation.
 //   node scripts/fetch-live.mjs [--dry-run] [--mock file.json]
 import { readFileSync } from "node:fs";
-import { loadPricing, loadSchedule, safeFetch } from "./lib/common.mjs";
+import { loadPricing, loadSchedule, safeFetch, readLimited } from "./lib/common.mjs";
 import { db } from "./lib/db.mjs";
 import { USAGE_SOURCE, requestsPerRun, monthKey, parseUsage, usageNote, canSpend, monthlyLimit } from "./lib/quota.mjs";
 import { perGram, withIndianAdjustment, round2, validateTicks, istDay, GOLD_PURITIES } from "../site/js/lib/pricing.js";
@@ -30,7 +30,7 @@ export function buildTicks({ gold, silver }, pricing) {
 async function quote(sym, token) {
   const res = await safeFetch(`https://www.goldapi.io/api/${sym}/INR`, { headers: { "x-access-token": token, "Content-Type": "application/json" } });
   if (!res.ok) throw new Error(`${sym}: HTTP ${res.status}`);
-  return parseGoldApi(await res.json());
+  return parseGoldApi(JSON.parse(await readLimited(res, 200_000)));
 }
 
 async function main() {

@@ -83,3 +83,57 @@ test("explain() turns technical errors into plain language", () => {
   assert.match(auth.explain("Signups not allowed for this instance"), /switched off/);
   assert.equal(auth.explain(""), "Something went wrong. Please try again.");
 });
+
+// ---- session security: idle timeout survives page reloads, sign-out revokes on the server ----
+const MIN = 60 * 1000;
+const storedSession = (lastActiveAgoMs, over = {}) => JSON.stringify({ access_token: "old-tok", refresh_token: "old-ref", expires_at: Date.now() + 3600e3, lastActive: Date.now() - lastActiveAgoMs, user: { id: "u9", email: "old@example.com" }, ...over });
+let reloadN = 0;
+const reload = () => import(`../site/js/auth.js?reload=${++reloadN}`);   // a fresh copy of the module = a page reload
+
+test("reopening the site after 30+ minutes does NOT resurrect the session, and the server session is revoked", async () => {
+  reset(); store.set("gt.session.v1", storedSession(45 * MIN));
+  const fresh = await reload();
+  assert.equal(fresh.user(), null);
+  assert.equal(store.get("gt.session.v1"), undefined, "stale session removed from storage");
+  const logout = calls.find((c) => c.url.includes("/auth/v1/logout"));
+  assert.ok(logout, "server was told to invalidate the old session");
+  assert.equal(logout.init.headers.Authorization, "Bearer old-tok");
+  await assert.rejects(() => fresh.token(), /sign in/i);
+});
+test("a recently active session survives a reload", async () => {
+  reset(); store.set("gt.session.v1", storedSession(5 * MIN));
+  const fresh = await reload();
+  assert.equal(fresh.user().email, "old@example.com");
+  assert.equal(await fresh.token(), "old-tok");
+  fresh.signOut();
+});
+test("a session that goes idle while the page stays open is closed on next use", async (t) => {
+  reset(); handler = () => ({ status: 200, body: session() });
+  await auth.signIn("me@example.com", "correct horse battery");
+  const real = Date.now; t.mock.method(Date, "now", () => real() + 31 * MIN);
+  assert.equal(auth.user(), null);
+  assert.equal(store.get("gt.session.v1"), undefined);
+});
+test("token() refuses an idle session with a clear message", async (t) => {
+  reset(); handler = () => ({ status: 200, body: session() });
+  await auth.signIn("me@example.com", "correct horse battery");
+  const real = Date.now; t.mock.method(Date, "now", () => real() + 31 * MIN);
+  await assert.rejects(() => auth.token(), /30 minutes of inactivity/);
+});
+test("sign-out revokes the session on the server (scope=local) with the user's own token", async () => {
+  reset(); handler = () => ({ status: 200, body: session() });
+  await auth.signIn("me@example.com", "correct horse battery"); calls.length = 0;
+  auth.signOut();
+  const logout = calls.find((c) => c.url.endsWith("/auth/v1/logout?scope=local"));
+  assert.ok(logout, "logout request sent");
+  assert.equal(logout.init.method, "POST"); assert.equal(logout.init.headers.Authorization, "Bearer tok"); assert.ok(logout.init.headers.apikey);
+  assert.equal(auth.user(), null);
+});
+test("sign-out still signs out locally when the server cannot be reached", async () => {
+  reset(); handler = () => ({ status: 200, body: session() });
+  await auth.signIn("me@example.com", "correct horse battery");
+  handler = () => ({ throw: "Failed to fetch" });
+  assert.doesNotThrow(() => auth.signOut());
+  await new Promise((r) => setTimeout(r, 20));      // an unhandled rejection from the revoke call would fail the run
+  assert.equal(auth.user(), null); assert.equal(store.get("gt.session.v1"), undefined);
+});
