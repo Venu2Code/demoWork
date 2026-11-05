@@ -40,13 +40,16 @@ test("last/next scheduled run are computed in India time, skipping Sundays", () 
   assert.equal(iso(nextScheduledRun(ist("2026-11-03T12:45:00"), schedule)), iso(ist("2026-11-03T14:00:00").getTime()));
 });
 
-test("staleness: only a MISSED scheduled update is stale (90 min spacing, 60 min grace)", () => {
+test("staleness: warns only when a slot older than the 6 h grace was never covered by a check", () => {
   const s = (last, now) => staleness(ist(last).toISOString(), ist(now), schedule).stale;
-  assert.equal(s("2026-11-03T14:02:00", "2026-11-03T15:00:00"), false, "ran on time, between runs");
-  assert.equal(s("2026-11-03T12:31:00", "2026-11-03T15:00:00"), false, "14:00 run is 60 min late: still within grace");
-  assert.equal(s("2026-11-03T12:31:00", "2026-11-03T15:15:00"), true, "14:00 run missed, 75 min overdue");
-  assert.equal(s("2026-11-03T09:35:00", "2026-11-03T19:45:00"), true, "most of the day's runs missed");
+  assert.equal(schedule.graceMinutes, 360, "tuned to GitHub's scheduler delays");
+  assert.equal(s("2026-11-03T14:02:00", "2026-11-03T15:00:00"), false, "fresh check, between runs");
+  assert.equal(s("2026-11-03T12:31:00", "2026-11-03T19:15:00"), false, "last check 6.7 h ago, but only the 12:30 slot is old enough and it was covered");
+  assert.equal(s("2026-11-03T12:31:00", "2026-11-03T21:00:00"), true, "the 14:00 slot is now 7 h old and was never covered");
+  assert.equal(s("2026-11-03T09:35:00", "2026-11-03T19:45:00"), true, "most of the day's slots missed");
   assert.equal(s("2026-11-03T20:02:00", "2026-11-04T07:00:00"), false, "overnight is not stale");
+  assert.equal(s("2026-11-04T09:05:00", "2026-11-04T12:00:00"), false, "morning runs still pending, nothing is old enough yet");
+  assert.equal(s("2026-11-03T20:02:00", "2026-11-04T15:40:00"), true, "no morning run at all by 15:40: the 09:30 slot is 6 h old and uncovered");
   assert.equal(s("2026-11-07T20:02:00", "2026-11-08T14:00:00"), false, "Sunday is not stale");
   assert.equal(staleness(null, ist("2026-11-03T12:00:00"), schedule).stale, true, "never checked");
   assert.equal(staleness(ist("2026-11-03T08:00:00").toISOString(), ist("2026-11-03T12:00:00")).stale, true, "no schedule: older than 3 h");

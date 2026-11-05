@@ -30,7 +30,9 @@ test("Today: prices, change log, news, forecast and meters render with data", as
   assert.match(await page.locator(".watch").innerText(), /Happened overnight/);
   assert.ok(!(await page.locator(".watch").innerText()).includes("Yesterday headline"), "only today's overnight items are shown");
   assert.match(await page.locator(".watch").innerText(), /Unclear impact|Pushes gold up/);
-  assert.match(await page.locator(".watch .fine").innerText(), /official and trusted sources/);
+  assert.match(await page.locator(".watch .fine", { hasText: "official and trusted" }).innerText(), /official and trusted sources/);
+  const links = await page.locator(".watch a").evaluateAll((as) => as.map((x) => x.href));
+  assert.ok(links.some((l) => l.startsWith("https://www.bls.gov/schedule/")) && links.some((l) => l.includes("federalreserve.gov/monetarypolicy/fomccalendars")), "official calendars are linked for release dates");
   assert.ok(!/claude/i.test(await page.locator(".watch").innerText()), "no claim that Claude wrote the news");
   assert.match(await page.locator(".notice").first().innerText(), /estimated Indian rates|out of date/);
   await noJunk(page); assert.deepEqual(errs, []); await ctx.close();
@@ -64,14 +66,14 @@ test("Today: no false 'out of date' warning overnight, and the next update time 
   const { page, ctx } = await open({ lastChecked: "2026-11-03T20:02:00+05:30" }, "", "2026-11-03T23:00:00+05:30");
   await page.waitForSelector(".price .big");
   assert.equal(await page.locator(".notice.warn").count(), 0);
-  assert.match(await page.locator(".titlebar").innerText(), /next update about 4 Nov, 09:30 am IST/i);
+  assert.match(await page.locator(".titlebar").innerText(), /next update expected around 4 Nov, 09:30 am IST \(can run late\)/i);
   await ctx.close();
 });
 test("Today: no false warning on Sunday; next update is Monday morning", async () => {
   const { page, ctx } = await open({ lastChecked: "2026-11-07T20:02:00+05:30" }, "", "2026-11-08T12:00:00+05:30");
   await page.waitForSelector(".price .big");
   assert.equal(await page.locator(".notice.warn").count(), 0);
-  assert.match(await page.locator(".titlebar").innerText(), /next update about 9 Nov, 09:30 am IST/i);
+  assert.match(await page.locator(".titlebar").innerText(), /next update expected around 9 Nov, 09:30 am IST \(can run late\)/i);
   await ctx.close();
 });
 

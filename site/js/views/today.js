@@ -23,7 +23,7 @@ function marketWatch(o) {
     h("div", { class: "head" }, h("h2", {}, "Market watch"), h("small", {}, "News that can move today's rate · times in IST")),
     h("div", { class: "cols" },
       h("div", {}, h("h3", {}, "Happened overnight"), newsList(over, "No verified overnight events recorded.")),
-      h("div", {}, h("h3", {}, "Coming up (today & tomorrow)"), newsList(up, "No scheduled market-moving events recorded."))),
+      h("div", {}, h("h3", {}, "Coming up (today & tomorrow)"), newsList(up, "No scheduled events are listed here."), h("p", { class: "fine" }, "US data release dates: ", extLink("https://www.bls.gov/schedule/news_release/", "BLS calendar"), " · ", extLink("https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm", "Fed meeting dates")))),
     h("p", { class: "fine" }, "Headlines come from a fixed list of official and trusted sources and are checked by code before display. \"Unclear impact\" means nobody has judged how the item affects gold. Event times can change; confirm with the source."));
 }
 
@@ -105,7 +105,7 @@ export async function todayView() {
     st.stale ? notice("warn", h("b", {}, "Prices may be out of date. "), src ? `A scheduled update was missed. The last successful check was ${dateTimeIST(src.last_checked)}.` : "No successful check recorded.", " Do not rely on these numbers for a purchase.") : null,
     src && !src.last_ok ? notice("warn", "The latest price check was rejected by our data-quality rules, so the previous values are shown.") : null,
     marketWatch(o),
-    h("div", { class: "titlebar" }, h("h1", {}, api.hasSilver() ? "India gold & silver rate today" : "India gold rate today"), h("p", { class: "muted" }, `${dateIST(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · last checked ${src ? dateTimeIST(src.last_checked) : "–"}${nextRun ? ` · next update about ${dateTimeIST(nextRun)}` : ""}`)),
+    h("div", { class: "titlebar" }, h("h1", {}, api.hasSilver() ? "India gold & silver rate today" : "India gold rate today"), h("p", { class: "muted" }, `${dateIST(new Date(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · last checked ${src ? dateTimeIST(src.last_checked) : "–"}${nextRun ? ` · next update expected around ${dateTimeIST(nextRun)} (can run late)` : ""}`)),
     priceCards(d),
     notice("info", h("b", {}, "These are estimated Indian rates. "), "International price converted to INR plus import duty. Your jeweller's rate, GST (3%) and making charges will differ."),
     t24 ? card("range", h("b", {}, "Today's 24K range: "), `${inr(t24.low)} – ${inr(t24.high)} per gram`) : null,
