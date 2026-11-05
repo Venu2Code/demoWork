@@ -33,6 +33,12 @@ GitHub fix already applied: Settings > Environments > github-pages > deployment 
 
 - DECISION (owner, 2026-11-03): cannot pay for the Claude API, so news is now FREE and AI-free: official/trusted RSS feeds (`config/feeds.json`) + BLS release calendar, impact 'unclear', forecast statistical only. `NEWS_MODE=claude` remains as an optional paid path. 58 unit + 22 browser tests pass. NOT YET RUN against the real feeds (sandbox blocks them): some feed URLs are from memory and may 404 or be blocked; the job logs each feed ('feed ok' / '::warning::feed failed') and only fails if none work. NEXT: run Daily news and forecast, read the per-feed log, replace dead feed URLs in `config/feeds.json`.
 
+## Session 4 (2026-11-05)
+- Daily news and forecast GREEN on `main` (free feeds): 6 of 8 feeds OK (Fed 20 items, RBI 10, ECB 15, Mint 35, BusinessLine 60, Moneycontrol 15); BLS RSS, BLS release calendar and Business Standard returned HTTP 403 (they block automated readers). Published 6 overnight headlines, 0 upcoming, 9 forecast rows (3 gold purities x 3 days).
+- DECISION (owner): skip US release dates for now. Removed the 3 blocked sources from `config/feeds.json`; the Coming up box says none are listed and links the official BLS and Fed calendars. (Option not taken: send a contact email in the User-Agent to BLS; never use the owner's account email for that without being asked, store any such address as a GitHub secret.)
+- FINDING: GitHub's free scheduler is unreliable for this repo: only 5 scheduled Live prices runs in ~28 h (expected ~10), several hours late (e.g. runs at 20:20-20:53 UTC for 14:30 UTC slots), and the daily news job ran ~6 h late. Prices still update, but not at the planned times. DECISION (owner): accept it and loosen the warning. New rule: 'out of date' only if a slot older than `graceMinutes` (360) was never covered by a successful check. 'Next update' text now says 'expected around ... (can run late)'; About page says planned times can slip. Better fix if needed later: an external timer (cron-job.org) calling `workflow_dispatch` with a repo-limited token.
+- Tests: 58 unit + 22 browser pass.
+
 ## NEXT (in order; always run workflows from branch `main`)
 0. Owner: set default branch to `main`, then run workflows 1-3 below (they will now appear in the Actions list).
 1. Actions > **Backfill 3-year history**: loads `daily_prices`. Not yet run or result unknown. If red, get the error text, fix (likely sources Stooq/Frankfurter format or reachability; fallback `scripts/import-csv.mjs`).

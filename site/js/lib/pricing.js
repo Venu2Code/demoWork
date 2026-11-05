@@ -64,15 +64,16 @@ export function nextScheduledRun(now, schedule) {
 
 /**
  * Is the displayed price too old to call "current"?
- * With a schedule: stale only if a scheduled refresh was MISSED (so nights, Sundays and the gap between runs are not warned about).
- * Without one: older than 3 hours.
+ * With a schedule: stale only if some scheduled slot older than `graceMinutes` was never covered by a successful check.
+ * (GitHub's free scheduler can run jobs hours late or skip them, so the grace period is generous; nights, Sundays and the
+ * gaps between runs are never warned about.) Without a schedule: older than 3 hours.
  */
 export function staleness(lastCheckedIso, now = new Date(), schedule = null) {
   if (!lastCheckedIso) return { stale: true, hours: Infinity };
   const last = Date.parse(lastCheckedIso), t = new Date(now).getTime(), hours = (t - last) / 36e5;
   if (!schedule) return { stale: hours > 3, hours };
-  const due = lastScheduledRun(t, schedule);
-  return { stale: due != null && last < due - 10 * 60000 && t - due > schedule.graceMinutes * 60000, hours };
+  const slot = lastScheduledRun(t - schedule.graceMinutes * 60000, schedule);   // newest slot that is already "old enough" to expect data
+  return { stale: slot != null && last < slot - 10 * 60000, hours };
 }
 
 /** IST calendar day (YYYY-MM-DD) for a Date/ISO string. */

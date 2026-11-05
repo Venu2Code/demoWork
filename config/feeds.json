@@ -1,16 +1,30 @@
 {
-  "_comment": "Free, official or trusted news feeds used for the Market watch box (no AI involved). Every host MUST be in site/data/allowed-domains.json. A feed that fails is skipped and logged; the job only fails if NO feed works. Calendars list scheduled data releases.",
+  "_comment": "Free, official or trusted news feeds used for the Market watch box (no AI involved). Every host MUST be in site/data/allowed-domains.json. A feed that fails is skipped and logged; the job only fails if NO feed works. Removed after the first real run (HTTP 403 for automated readers): bls.gov RSS and release calendar, business-standard.com. Calendars can list ICS release calendars; none is active.",
   "feeds": [
-    { "name": "US Federal Reserve", "url": "https://www.federalreserve.gov/feeds/press_all.xml" },
-    { "name": "US Bureau of Labor Statistics", "url": "https://www.bls.gov/feed/bls_latest.rss" },
-    { "name": "Reserve Bank of India", "url": "https://www.rbi.org.in/pressreleases_rss.xml" },
-    { "name": "European Central Bank", "url": "https://www.ecb.europa.eu/rss/press.xml" },
-    { "name": "Mint (markets)", "url": "https://www.livemint.com/rss/markets" },
-    { "name": "Business Standard (markets)", "url": "https://www.business-standard.com/rss/markets-106.rss" },
-    { "name": "BusinessLine (markets)", "url": "https://www.thehindubusinessline.com/markets/feeder/default.rss" },
-    { "name": "Moneycontrol (commodities)", "url": "https://www.moneycontrol.com/rss/commodities.xml" }
+    {
+      "name": "US Federal Reserve",
+      "url": "https://www.federalreserve.gov/feeds/press_all.xml"
+    },
+    {
+      "name": "Reserve Bank of India",
+      "url": "https://www.rbi.org.in/pressreleases_rss.xml"
+    },
+    {
+      "name": "European Central Bank",
+      "url": "https://www.ecb.europa.eu/rss/press.xml"
+    },
+    {
+      "name": "Mint (markets)",
+      "url": "https://www.livemint.com/rss/markets"
+    },
+    {
+      "name": "BusinessLine (markets)",
+      "url": "https://www.thehindubusinessline.com/markets/feeder/default.rss"
+    },
+    {
+      "name": "Moneycontrol (commodities)",
+      "url": "https://www.moneycontrol.com/rss/commodities.xml"
+    }
   ],
-  "calendars": [
-    { "name": "US Bureau of Labor Statistics release calendar", "url": "https://www.bls.gov/schedule/news_release/bls.ics", "link": "https://www.bls.gov/schedule/news_release/" }
-  ]
+  "calendars": []
 }
